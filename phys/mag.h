@@ -43,7 +43,6 @@ T ferromag(const t_cont<t_vec>& vecNeighbours, const t_cont<std::complex<T>>& ve
 	return T(2)*tS*(J0 - J).real();
 }
 
-
 template<class t_vec = ublas::vector<double>,
 	typename T = typename t_vec::value_type,
 	typename t_cont = std::initializer_list<std::tuple<t_vec, std::complex<T>>>>
@@ -56,10 +55,9 @@ T ferromag(const t_cont& lstNeighbours, const ublas::vector<T>& vecq, T tS)
 // ----------------------------------------------------------------------------
 
 
-
 /**
  * Magnetic form factors
- * @desc see: ILL Neutron Data Booklet sec. 2.5-1 (p. 60)
+ * @desc see: (ILL Neutron Data Booklet), sec. 2.5-1 (p. 60)
  * @desc also see: https://www.ill.eu/sites/ccsl/ffacts/
  */
 template<class T=double, template<class...> class t_vec=std::initializer_list>
@@ -75,14 +73,12 @@ T j0_avg(T Q, const t_vec<T>& A, const t_vec<T>& a)
 	return tl::formfact<T, std::vector>(Q, vecA, vecB, c);
 }
 
-
 template<class T=double, template<class...> class t_vec=std::initializer_list>
 T j2_avg(T Q, const t_vec<T>& A, const t_vec<T>& a)
 {
 	T s = Q/(T(4)*get_pi<T>());
 	return j0_avg<T, t_vec>(Q, A, a) * s * s;
 }
-
 
 template<class T=double, template<class...> class t_vec=std::initializer_list>
 T mag_formfact(T Q, T L, T S,
@@ -91,7 +87,6 @@ T mag_formfact(T Q, T L, T S,
 {
 	return (L+T(2)*S) * j0_avg<T, t_vec>(Q, A0, a0) * L * j2_avg<T, t_vec>(Q, A2, a2);
 }
-
 
 /**
  * form factor for transition metals (d orbitals, weak LS, spin-only)
@@ -108,7 +103,6 @@ std::tuple<T,T,T> mag_formfact_d(T Q, T g,
 
 	return std::tuple<T,T,T>(j0, j2, j0 + (T(1)-T(2)/g)*j2);
 }
-
 
 /**
  * form factor for rare earths (f orbitals, strong LS, jj)

@@ -10,7 +10,6 @@
 
 #include "../helper/flags.h"
 #include "../helper/exception.h"
-//#include "quat.h"
 #include "linalg.h"
 #include "linalg2.h"
 #include "stat.h"
@@ -37,12 +36,14 @@ public:
 	using t_vec = ublas::vector<T>;
 	using t_mat = ublas::matrix<T>;
 
+
 protected:
 	bool m_bValid = 0;
 	t_vec m_vecX0;
 	t_vec m_vecDir0, m_vecDir1;
 	t_vec m_vecNorm;
 	T m_d;
+
 
 public:
 	/**
@@ -258,7 +259,9 @@ public:
 };
 
 
+
 //------------------------------------------------------------------------------
+
 
 
 template<typename T> class Line
@@ -267,12 +270,16 @@ public:
 	using t_vec = ublas::vector<T>;
 	using t_mat = ublas::matrix<T>;
 
+
 protected:
 	t_vec m_vecX0;
 	t_vec m_vecDir;
 
+
 public:
 	Line() {}
+
+
 	Line(const t_vec& vec0, const t_vec& dir)
 		: m_vecX0(vec0), m_vecDir(dir)
 	{}
@@ -292,6 +299,25 @@ public:
 
 
 	/**
+	 * distance to a point
+	 */
+	T GetDist(const t_vec& vecPt) const
+	{
+		const t_vec& vecX0 = GetX0();
+		t_vec vecDir = GetDir() / veclen(GetDir());
+
+		// shift everything so that line goes through the origin
+		t_vec vecPtShift = vecPt - vecX0;
+
+		// project point on direction vector
+		t_vec vecClosestPt = inner(vecPtShift, vecDir) * vecDir;
+
+		// distance between point and projected point
+		return veclen(vecClosestPt - vecPtShift);
+	}
+
+
+	/**
 	 * distance to line l1
 	 */
 	T GetDist(const Line<T>& l1) const
@@ -299,38 +325,18 @@ public:
 		const Line<T>& l0 = *this;
 
 		// vector normal to both directions defining the distance line
-		t_vec vecNorm = cross_3(l0.GetDir(), l1.GetDir());
+		t_vec vecNorm = cross_3<t_vec>(l0.GetDir(), l1.GetDir());
 		T tlenNorm = veclen(vecNorm);
 
 		t_vec vec01 = l1.GetX0() - l0.GetX0();
 
-		// if the lines are parallel, any point (e.g. the X0s) can be used
+		// if the lines are parallel, any point (e.g. the x0s) can be used
 		if(float_equal(tlenNorm, T(0)))
-			return veclen(vec01);
+			return GetDist(l1.GetX0());
 
 		// project x0_1 - x0_0 onto vecNorm
 		T tdot = std::abs(inner(vec01, vecNorm));
 		return tdot / tlenNorm;
-	}
-
-
-	/**
-	 * distance to a point
-	 */
-	T GetDist(const t_vec& vecPt) const
-	{
-		const t_vec& vecX0 = GetX0();
-		const t_vec& vecDir = GetDir();
-
-		T tlenDir = veclen(vecDir);
-
-		// area of parallelogram spanned by vecDir and vecPt-vecX0
-		// 	== ||vecDir||*||vecPt-vecX0||*sin(th)
-		T tArea = veclen(cross_3(vecDir, vecPt-vecX0));
-
-		// length of perpendicular line from vecPt, also by sine theorem
-		// 	== ||vecPt-vecX0||*sin(th)
-		return tArea / tlenDir;
 	}
 
 
@@ -420,7 +426,7 @@ public:
 		const t_vec xp2 = plane.GetX0() + plane.GetDir1();
 
 		t_mat matDenom(N+1,N+1);
-		matDenom(0,0) = 1;		matDenom(0,1) = 1;		matDenom(0,2) = 1;		matDenom(0,3) = 0;
+		matDenom(0,0) = 1;	matDenom(0,1) = 1;	matDenom(0,2) = 1;	matDenom(0,3) = 0;
 		matDenom(1,0) = xp0[0];	matDenom(1,1) = xp1[0];	matDenom(1,2) = xp2[0];	matDenom(1,3) = dirl[0];
 		matDenom(2,0) = xp0[1];	matDenom(2,1) = xp1[1];	matDenom(2,2) = xp2[1];	matDenom(2,3) = dirl[1];
 		matDenom(3,0) = xp0[2];	matDenom(3,1) = xp1[2];	matDenom(3,2) = xp2[2];	matDenom(3,3) = dirl[2];
@@ -430,7 +436,7 @@ public:
 			return false;
 
 		t_mat matNum(N+1,N+1);
-		matNum(0,0) = 1;		matNum(0,1) = 1;		matNum(0,2) = 1;		matNum(0,3) = 1;
+		matNum(0,0) = 1;	matNum(0,1) = 1;	matNum(0,2) = 1;	matNum(0,3) = 1;
 		matNum(1,0) = xp0[0];	matNum(1,1) = xp1[0];	matNum(1,2) = xp2[0];	matNum(1,3) = posl[0];
 		matNum(2,0) = xp0[1];	matNum(2,1) = xp1[1];	matNum(2,2) = xp2[1];	matNum(2,3) = posl[1];
 		matNum(3,0) = xp0[2];	matNum(3,1) = xp1[2];	matNum(3,2) = xp2[2];	matNum(3,3) = posl[2];
@@ -448,19 +454,27 @@ public:
 	 *
 	 * pos0 + t0*dir0 = pos1 + t1*dir1
 	 * pos0 - pos1 = t1*dir1 - t0*dir0
-	 * exact: b = Mx  ->  M^(-1)*b = x
-	 * approx: M^t b = M^t M x  ->  (M^t M)^(-1) * M^t b = x
+	 * pos0 - pos1 = (-dir0 dir1) * (t0 t1)^t
+	 * exact solution for the t params: (-dir0 dir1)^(-1) * (pos0 - pos1) = (t0 t1)^t
+	 *
+	 * generally:
+	 * exact: b = M t  ->  M^(-1)*b = t
+	 * approx.: M^t b = M^t M t  ->  (M^t M)^(-1) * M^t b = t
 	 */
-	bool intersect(const Line<T>& line, T& t, T eps = tl::get_epsilon<T>()) const
+	bool intersect(const Line<T>& line1, T& t0, T eps = tl::get_epsilon<T>(), T *pt1=nullptr) const
 	{
-		if(IsParallel(line, eps))
+		if(IsParallel(line1, eps))
+		{
+			t0 = 0;
+			if(pt1) *pt1 = 0;
 			return false;
+		}
 
 		const t_vec& pos0 =  this->GetX0();
-		const t_vec& pos1 =  line.GetX0();
+		const t_vec& pos1 =  line1.GetX0();
 
 		const t_vec& dir0 =  this->GetDir();
-		const t_vec& dir1 =  line.GetDir();
+		const t_vec& dir1 =  line1.GetDir();
 
 		const t_vec pos = pos0-pos1;
 		t_mat M = column_matrix({-dir0, dir1});
@@ -473,9 +487,17 @@ public:
 
 		t_vec Mtb = prod_mv(Mt, pos);
 		t_vec params = prod_mv(MtMinv, Mtb);
-		t = params[0];
 
-		return true;
+		// get parameters
+		t0 = params[0];
+		T t1 = params[1];
+		if(pt1) *pt1 = t1;
+
+		// get closest points between the two lines
+		t_vec vecInters0 = (*this)(t0);
+		t_vec vecInters1 = line1(t1);
+
+		return veclen(vecInters1-vecInters0) <= eps;
 	}
 
 
@@ -500,6 +522,7 @@ public:
 		linePerp = Line<T>(vecPos, vecDir);
 		return true;
 	}
+
 
 	/**
 	 * middle perpendicular plane (in 3d)
@@ -586,9 +609,6 @@ bool intersect_line_poly(const Line<T>& line,
 	// is intersection point within polygon?
 	const t_vec vecFaceCentre = mean_value(vertPoly);
 
-	//std::ostringstream ostr;
-	//ostr << "intersect: " << vecIntersect << ", face centre: " << vecFaceCentre << "\n";
-
 	for(std::size_t iVert = 0; iVert < vertPoly.size(); ++iVert)
 	{
 		std::size_t iNextVert = iVert < (vertPoly.size()-1) ? iVert+1 : 0;
@@ -604,9 +624,6 @@ bool intersect_line_poly(const Line<T>& line,
 
 		if(planeEdge.GetDist(vecIntersect) < -eps)
 			return false;
-
-		//ostr << "Face " << iVert << ": " << vecEdgeCentre << ", " << vecNorm << ", "
-		//	<< planeEdge.GetDist(vecIntersect) << "\n";
 	}
 
 	return true;
@@ -740,7 +757,6 @@ t_vec get_face_normal(const t_cont<t_vec>& vecVerts, t_vec vecCentre,
 	if(inner(vecNorm, vecCentreToFace) < T(0))
 		vecNorm = -vecNorm;
 
-	//tl::log_debug("vec = ", vecCentreToFace, ",\tnorm = ", vecNorm);
 	return vecNorm;
 }
 
@@ -799,7 +815,7 @@ t_cont<t_cont<t_vec>> verts_to_polyhedron(
 					t_cont<t_vec>& vecPoly = vecPolys[iPlane];
 
 					// plane already in set?
-					if(plane.IsOnPlane(vert0, T(10)*eps) && 
+					if(plane.IsOnPlane(vert0, T(10)*eps) &&
 						plane.IsOnPlane(vert1, T(10)*eps) &&
 						plane.IsOnPlane(vert2, T(10)*eps))
 					{
@@ -864,6 +880,7 @@ public:
 	using t_vec = ublas::vector<T>;
 	using t_mat = ublas::matrix<T>;
 
+
 protected:
 	// x^T Q x  +  r x  +  s  =  0
 	t_mat m_Q = zero_m<t_mat>(3,3);
@@ -873,25 +890,35 @@ protected:
 	t_vec m_vecOffs = zero_v<t_vec>(3);
 	bool m_bQSymm = 1;
 
+
 protected:
 	void CheckSymm()
 	{
 		m_bQSymm = is_symmetric(m_Q, std::cbrt(get_epsilon<T>()));
 	}
 
+
 public:
 	Quadric() {}
+
+
 	Quadric(std::size_t iDim)
 		: m_Q(zero_m<t_mat>(iDim,iDim)), m_r(zero_v<t_vec>(iDim))
 	{ CheckSymm(); }
+
+
 	Quadric(const t_mat& Q) : m_Q(Q)
 	{ CheckSymm(); }
+
+
 	Quadric(const t_mat& Q, const t_vec& r, T s)
 		: m_Q(Q), m_r(r), m_s(s)
 	{ CheckSymm(); }
 	~Quadric() {}
 
+
 	void SetDim(std::size_t iDim) { m_Q.resize(iDim, iDim, 1); }
+
 
 	const Quadric<T>& operator=(const Quadric<T>& quad)
 	{
@@ -904,6 +931,7 @@ public:
 		return *this;
 	}
 
+
 	Quadric<T>& operator=(Quadric<T>&& quad)
 	{
 		this->m_Q = std::move(quad.m_Q);
@@ -915,19 +943,24 @@ public:
 		return *this;
 	}
 
+
 	Quadric(const Quadric<T>& quad) { *this = quad; }
 	Quadric(Quadric<T>&& quad) { *this = quad; }
 
+
 	void SetOffset(const t_vec& vec) { m_vecOffs = vec; }
 	const t_vec& GetOffset() const { return m_vecOffs; }
+
 
 	const t_mat& GetQ() const { return m_Q; }
 	const t_vec& GetR() const { return m_r; }
 	T GetS() const { return m_s; }
 
+
 	void SetQ(const t_mat& Q) { m_Q = Q; CheckSymm(); }
 	void SetR(const t_vec& r) { m_r = r; }
 	void SetS(T s) { m_s = s; }
+
 
 	T operator()(const t_vec& _x) const
 	{
@@ -940,6 +973,7 @@ public:
 		return dQ + dR + m_s;
 	}
 
+
 	/**
 	 * remove column and row iIdx
 	 */
@@ -949,6 +983,7 @@ public:
 		m_r = remove_elem(m_r, iIdx);
 		m_vecOffs = remove_elem(m_vecOffs, iIdx);
 	}
+
 
 	void transform(const t_mat& S)
 	{
