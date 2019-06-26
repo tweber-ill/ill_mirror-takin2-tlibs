@@ -905,6 +905,7 @@ t_length<Sys, Y> focal_len(const t_length<Sys, Y>& lenBefore, const t_length<Sys
 	return Y(1) / f_inv;
 }
 
+
 /**
  * optimal mono/ana curvature, 
  * see e.g. 
