@@ -276,21 +276,27 @@ T LinInterp<T>::operator()(T x) const
 // ----------------------------------------------------------------------------
 
 template<typename T>
-void find_peaks(std::size_t iLen, const T* px, const T* py, unsigned int iOrder,
+void find_peaks(std::size_t iLen, const T* _px, const T* _py, unsigned int iOrder,
 	std::vector<T>& vecMaximaX, std::vector<T>& vecMaximaSize, std::vector<T>& vecMaximaWidth,
-	std::size_t iNumSpline = 512)
+	T eps = tl::get_epsilon<T>(), std::size_t iNumSpline = 512)
 {
-	BSpline<T> spline(iLen, px, py, iOrder);
-
-
 	// allocate memory
-	std::unique_ptr<T, std::default_delete<T[]>> uptrMem{new T[4*iNumSpline]};
-	T *pSplineX = uptrMem.get();
-	T *pSplineY = uptrMem.get() + iNumSpline;
-	T *pSplineDiff = uptrMem.get() + 2*iNumSpline;
-	T *pSplineDiff2 = uptrMem.get() + 3*iNumSpline;
+	std::unique_ptr<T, std::default_delete<T[]>> uptrMem{new T[6*iNumSpline]};
+	T *px = uptrMem.get() + 0*iNumSpline;
+	T *py = uptrMem.get() + 1*iNumSpline;
+	T *pSplineX = uptrMem.get() + 2*iNumSpline;
+	T *pSplineY = uptrMem.get() + 3*iNumSpline;
+	T *pSplineDiff = uptrMem.get() + 4*iNumSpline;
+	T *pSplineDiff2 = uptrMem.get() + 5*iNumSpline;
 
 
+	// sort input values
+	std::copy(_px, _px+iLen, px);
+	std::copy(_py, _py+iLen, py);
+	tl::sort_2<T*>(px, px+iLen, py);
+
+
+	BSpline<T> spline(iLen, px, py, iOrder);
 	const T* pdyMin = std::min_element(py, py+iLen);
 
 	for(std::size_t iSpline=0; iSpline<iNumSpline; ++iSpline)
@@ -304,10 +310,14 @@ void find_peaks(std::size_t iLen, const T* px, const T* py, unsigned int iOrder,
 
 	tl::diff(iNumSpline, pSplineX, pSplineY, pSplineDiff);
 	tl::diff(iNumSpline, pSplineX, pSplineDiff, pSplineDiff2);
-	std::vector<std::size_t> vecZeroes = tl::find_zeroes<T>(iNumSpline, pSplineDiff);
+	std::vector<std::size_t> vecZeroes = tl::find_zeroes<T>(iNumSpline, pSplineDiff, eps);
+
+	//std::ofstream ofDbg{"0.dat"};
+	//for(std::size_t i=0; i<iNumSpline; ++i)
+	//	ofDbg << pSplineX[i] << "\t" << pSplineY[i] << "\t" << pSplineDiff[i] << "\t" << pSplineDiff2[i] << std::endl;
 
 
-	for(std::size_t iZeroIdx = 0; iZeroIdx<vecZeroes.size(); ++iZeroIdx)
+	for(std::size_t iZeroIdx=0; iZeroIdx<vecZeroes.size(); ++iZeroIdx)
 	{
 		const std::size_t iZero = vecZeroes[iZeroIdx];
 
@@ -332,7 +342,7 @@ void find_peaks(std::size_t iLen, const T* px, const T* py, unsigned int iOrder,
 		if(iMinIdxLeft>=0)
 		{
 			dHeight += (pSplineY[iZero]-pSplineY[iMinIdxLeft]);
-			dWidth += fabs((pSplineX[iZero]-pSplineX[iMinIdxLeft]));
+			dWidth += std::abs((pSplineX[iZero]-pSplineX[iMinIdxLeft]));
 			dDiv += 1.;
 		}
 
@@ -340,7 +350,7 @@ void find_peaks(std::size_t iLen, const T* px, const T* py, unsigned int iOrder,
 		if(iMinIdxRight>=0)
 		{
 			dHeight += (pSplineY[iZero]-pSplineY[iMinIdxRight]);
-			dWidth += fabs((pSplineX[iZero]-pSplineX[iMinIdxRight]));
+			dWidth += std::abs((pSplineX[iZero]-pSplineX[iMinIdxRight]));
 			dDiv += 1.;
 		}
 

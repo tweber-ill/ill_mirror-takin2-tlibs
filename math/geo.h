@@ -1215,7 +1215,7 @@ public:
 
 
 template<typename T = double>
-std::vector<std::size_t> find_zeroes(std::size_t N, const T* pIn)
+std::vector<std::size_t> find_zeroes(std::size_t N, const T* pIn, T eps = tl::get_epsilon<T>())
 {
 	using t_vec = ublas::vector<T>;
 	std::vector<std::size_t> vecIndices;
@@ -1234,8 +1234,8 @@ std::vector<std::size_t> find_zeroes(std::size_t N, const T* pIn)
 		pos1[0] = 1.; pos1[1] = pIn[i+1];
 		Line<T> line(pos0, pos1-pos0);
 
-		T param;
-		if(!line.intersect(xaxis, param))
+		T param{};
+		if(!line.intersect(xaxis, param, eps))
 			continue;
 
 		t_vec posInters = line(param);

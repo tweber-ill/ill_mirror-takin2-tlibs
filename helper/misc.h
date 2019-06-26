@@ -191,7 +191,7 @@ void sort_2(Iter begin1, Iter end1, Iter begin2)
 		pObj[i].vec.push_back(*(begin2+i));
 	}
 
-	std::sort(pObj, pObj+N, comp_fkt<T>);
+	std::stable_sort(pObj, pObj+N, comp_fkt<T>);
 	for(std::size_t i=0; i<N; ++i)
 	{
 		*(begin1+i) = pObj[i].vec[0];
@@ -219,7 +219,7 @@ void sort_3(Iter begin1, Iter end1, Iter begin2, Iter begin3)
 		pObj[i].vec.push_back(*(begin3+i));
 	}
 
-	std::sort(pObj, pObj+N, comp_fkt<T>);
+	std::stable_sort(pObj, pObj+N, comp_fkt<T>);
 	for(std::size_t i=0; i<N; ++i)
 	{
 		*(begin1+i) = pObj[i].vec[0];
@@ -243,7 +243,7 @@ t_cont<std::size_t> sorted_idx(const t_cont<t_val>& vec, t_func fkt)
 	for(std::size_t i=0; i<vec.size(); ++i)
 		vecIdx.push_back(i);
 
-	std::sort(vecIdx.begin(), vecIdx.end(),
+	std::stable_sort(vecIdx.begin(), vecIdx.end(),
 		[&vec, &fkt] (std::size_t iIdx0, std::size_t iIdx1) -> bool
 	{
 		return fkt(vec[iIdx0], vec[iIdx1]);
