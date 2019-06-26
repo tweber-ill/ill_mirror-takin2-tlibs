@@ -277,15 +277,19 @@ T LinInterp<T>::operator()(T x) const
 
 template<typename T>
 void find_peaks(std::size_t iLen, const T* px, const T* py, unsigned int iOrder,
-	std::vector<T>& vecMaximaX, std::vector<T>& vecMaximaSize, std::vector<T>& vecMaximaWidth)
+	std::vector<T>& vecMaximaX, std::vector<T>& vecMaximaSize, std::vector<T>& vecMaximaWidth,
+	std::size_t iNumSpline = 512)
 {
 	BSpline<T> spline(iLen, px, py, iOrder);
-	const std::size_t iNumSpline = 512;    // TODO: in config
 
-	T *pSplineX = new T[iNumSpline];
-	T *pSplineY = new T[iNumSpline];
-	T *pSplineDiff = new T[iNumSpline];
-	T *pSplineDiff2 = new T[iNumSpline];
+
+	// allocate memory
+	std::unique_ptr<T, std::default_delete<T[]>> uptrMem{new T[4*iNumSpline]};
+	T *pSplineX = uptrMem.get();
+	T *pSplineY = uptrMem.get() + iNumSpline;
+	T *pSplineDiff = uptrMem.get() + 2*iNumSpline;
+	T *pSplineDiff2 = uptrMem.get() + 3*iNumSpline;
+
 
 	const T* pdyMin = std::min_element(py, py+iLen);
 
@@ -368,15 +372,13 @@ void find_peaks(std::size_t iLen, const T* px, const T* py, unsigned int iOrder,
 
 	std::ostringstream ostrDbg;
 	ostrDbg << "Prefitter found peaks at: ";
-	for(T dValX : vecMaximaX)
-		ostrDbg << dValX << ", ";
+	for(std::size_t i=0; i<vecMaximaX.size(); ++i)
+	{
+		ostrDbg << vecMaximaX[i] 
+			<< " (int: " << vecMaximaSize[i] 
+			<< ", width: " << vecMaximaWidth[i] << "), ";
+	}
 	log_debug(ostrDbg.str());
-
-
-	delete[] pSplineX;
-	delete[] pSplineY;
-	delete[] pSplineDiff;
-	delete[] pSplineDiff2;
 }
 
 }
