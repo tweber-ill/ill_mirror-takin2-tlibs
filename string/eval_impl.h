@@ -193,8 +193,7 @@ namespace tl
 				// * or /
 				m_term = (m_val [ qi::_val = qi::_1 ]
 					> *((t_ch('*') > m_val) [ qi::_val *= qi::_1 ]
-						| (t_ch('/') > m_val) [ qi::_val /= qi::_1 ]))
-					| m_val [ qi::_val = qi::_1 ];
+						| (t_ch('/') > m_val) [ qi::_val /= qi::_1 ]));
 
 				// pow
 				m_val = m_baseval [ qi::_val = qi::_1 ]
