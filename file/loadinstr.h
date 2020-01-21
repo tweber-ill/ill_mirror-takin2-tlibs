@@ -85,7 +85,9 @@ class FileInstrBase
 		virtual std::size_t NumPolChannels() const;
 		virtual const std::vector<std::array<t_real, 6>>& GetPolStates() const;
 		virtual void SetPolNames(const char* pVec1, const char* pVec2,
-			const char* pCur1, const char* pCur2);
+			const char* pCur1, const char* pCur2);	// spherical PA
+		virtual void SetLinPolNames(const char* pFlip1, const char* pFlip2,
+			const char* pXYZ);	// linear PA
 
 	public:
 		virtual bool MatchColumn(const std::string& strRegex,
@@ -124,6 +126,9 @@ class FilePsi : public FileInstrBase<_t_real>
 		// instrument-specific device names
 		std::string m_strPolVec1 {"p1"}, m_strPolVec2 {"p2"};
 		std::string m_strPolCur1 {"i1"}, m_strPolCur2 {"i2"};
+
+		std::string m_strXYZ {"hx"};
+		std::string m_strFlip1 {"f1"}, m_strFlip2 {"f2"};
 
 
 	protected:
@@ -200,6 +205,13 @@ class FilePsi : public FileInstrBase<_t_real>
 		{
 			m_strPolVec1 = pVec1; m_strPolVec2 = pVec2;
 			m_strPolCur1 = pCur1; m_strPolCur2 = pCur2;
+		}
+
+		virtual void SetLinPolNames(const char* pFlip1, const char* pFlip2,
+			const char* pXYZ) override
+		{
+			m_strFlip1 = pFlip1; m_strFlip2 = pFlip2;
+			m_strXYZ = pXYZ;
 		}
 };
 

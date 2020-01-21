@@ -299,6 +299,11 @@ void FileInstrBase<t_real>::SetPolNames(const char* pVec1, const char* pVec2,
 {}
 
 template<class t_real>
+void FileInstrBase<t_real>::SetLinPolNames(const char* pFlip1, const char* pFlip2,
+	const char* pXYZ)
+{}
+
+template<class t_real>
 std::size_t FileInstrBase<t_real>::NumPolChannels() const
 { return 0; }
 
@@ -418,6 +423,8 @@ void FilePsi<t_real>::ParsePolData()
 		return true;
 	};
 
+	bool bIsSphericalPA = 1;
+	bool bSwitchOn = 0;
 
 	// iterate command lines
 	for(std::string& strLine : vecLines)
@@ -431,11 +438,14 @@ void FilePsi<t_real>::ParsePolData()
 		if(vecLine.size() == 0)
 			continue;
 
-		if(vecLine[0] == "dr")	// polarisation vector or current driven
+		// first token: dr command
+		// polarisation vector or current driven
+		if(vecLine[0] == "dr")
 		{
 			std::string strCurDev = "";
-
 			std::size_t iCurComp = 0;
+
+			// scan next tokens in drive command
 			for(std::size_t iDr=1; iDr<vecLine.size(); ++iDr)
 			{
 				const std::string& strWord = vecLine[iDr];
@@ -444,8 +454,12 @@ void FilePsi<t_real>::ParsePolData()
 				{
 					t_real dNum = tl::str_to_var<t_real>(strWord);
 
+					// --------------------------------------------------
+					// for spherical polarisation analysis
+					// --------------------------------------------------
 					if(strCurDev == m_strPolVec1)
-					{	// incoming polarisation vector changed
+					{
+						// incoming polarisation vector changed
 						switch(iCurComp)
 						{
 							case 0: Pix = dNum; break;
@@ -482,18 +496,84 @@ void FilePsi<t_real>::ParsePolData()
 								Pf_sign = t_real(-1);
 						}
 					}
+					// --------------------------------------------------
+
+					// --------------------------------------------------
+					// for linear polarisation analysis
+					// --------------------------------------------------
+					else if(strCurDev == m_strXYZ)
+					{
+						bIsSphericalPA = 0;
+
+						// sample guide field vector changed
+						switch(iCurComp)
+						{
+							case 0: Pfx = Pix = dNum; break;
+							case 1: Pfy = Piy = dNum; break;
+							case 2: Pfz = Piz = dNum; break;
+						}
+					}
+					// --------------------------------------------------
 
 					++iCurComp;
 				}
 				else	// (next) device to drive
 				{
-					strCurDev = strWord;
 					iCurComp = 0;
+					strCurDev = strWord;
 				}
 			}
 		}
-		else if(vecLine[0] == "co")	// count command issued -> save current spin states
+		// --------------------------------------------------
+		// for linear polarisation analysis
+		// --------------------------------------------------
+		else if(vecLine.size()>1 && (vecLine[0] == "on" || vecLine[0] == "off" || vecLine[0] == "of"))
 		{
+			if(vecLine[0] == "on")
+				bSwitchOn = 1;
+			else if(vecLine[0] == "off" || vecLine[0] == "of")
+				bSwitchOn = 0;
+
+			std::string strFlip = vecLine[1];
+
+			if(strFlip == m_strFlip1)
+			{
+				bIsSphericalPA = 0;
+				Pi_sign = bSwitchOn ? t_real(-1) : t_real(1);
+			}
+			else if(strFlip == m_strFlip2)
+			{
+				bIsSphericalPA = 0;
+				Pf_sign = bSwitchOn ? t_real(-1) : t_real(1);
+			}
+		}
+		// --------------------------------------------------
+
+
+		// count command issued -> save current spin states
+		else if(vecLine[0] == "co")
+		{
+			// for linear PA, we only have principal directions
+			// and diagonal elements of the P matrix
+			// values in the other components are correction currents
+			if(!bIsSphericalPA)
+			{
+				int maxComp = 0;
+				if(std::abs(Piy) > std::abs(Pix) && std::abs(Piy) > std::abs(Piz))
+					maxComp = 1;
+				if(std::abs(Piz) > std::abs(Piy) && std::abs(Piz) > std::abs(Pix))
+					maxComp = 2;
+
+				Pix = Piy = Piz = Pfx = Pfy = Pfz = 0;
+				if(maxComp == 0)
+					Pix = Pfx = 1;
+				else if(maxComp == 1)
+					Piy = Pfy = 1;
+				else if(maxComp == 2)
+					Piz = Pfz = 1;
+			}
+
+
 			m_vecPolStates.push_back(std::array<t_real,6>({{
 				Pi_sign*Pix, Pi_sign*Piy, Pi_sign*Piz,
 				Pf_sign*Pfx, Pf_sign*Pfy, Pf_sign*Pfz }}));
