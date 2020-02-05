@@ -130,7 +130,14 @@ void cvec_to_arrs(const std::vector<std::complex<T>>& vec, T* pReal, T* pImag)
 
 /**
  * tShift=1: shift 1 sample to the right
- * tShift=-11: shift 1 sample to the left
+ * tShift=-1: shift 1 sample to the left
+ *
+ * DFT: x'[k] = sum(n=0..N-1) x[n] exp(-2pi*i*k * n/N)
+ *
+ * assume data set is shifted (and assume wrapping around of array):
+ * x'[k] = sum(n=0..N-1) x[n-shift] exp(-2pi*i*k * n/N)
+ * x'[k] = sum(n=0..N-1) x[n] exp(-2pi*i*k * (n+shift)/N)
+ * x'[k] = sum(n=0..N-1) x[n] exp(-2pi*i*k * n/N) exp(-2pi*i*k * shift/N)
  */
 template<typename T=double>
 std::vector<std::complex<T>> dft_shift(const std::vector<std::complex<T>>& vecIn, T tShift=1.)
@@ -139,13 +146,14 @@ std::vector<std::complex<T>> dft_shift(const std::vector<std::complex<T>>& vecIn
 	std::vector<std::complex<T>> vecOut;
 	vecOut.reserve(N);
 
-	for(std::size_t i=0; i<N; ++i)
+	for(std::size_t k=0; k<N; ++k)
 	{
-		const T c = std::cos(T(2)*get_pi<T>()*i*tShift / N);
-		const T s = std::sin(T(2)*get_pi<T>()*i*tShift / N);
+		// multiply with e^(-2pi*i * k*shift/N)
+		const T c = std::cos(T(2)*get_pi<T>()*k*tShift / N);
+		const T s = std::sin(T(2)*get_pi<T>()*k*tShift / N);
 		std::complex<T> ph(c, -s);
 
-		vecOut.push_back(vecIn[i]*ph);
+		vecOut.push_back(vecIn[k]*ph);
 	}
 
 	return vecOut;
