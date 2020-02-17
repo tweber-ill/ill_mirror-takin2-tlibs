@@ -1,8 +1,8 @@
 /**
  * julia interface helpers
  *
- * @author Tobias Weber <tobias.weber@tum.de>
- * @date 23-apr-2017
+ * @author Tobias Weber <tweber@ill.fr>
+ * @date 23-apr-2017, 17-feb-2020
  * @license GPLv2 or GPLv3
  */
 
@@ -13,6 +13,10 @@
 #include <tuple>
 #include <limits>
 #include <string>
+#include <functional>
+
+#include <boost/system/error_code.hpp>
+#include <boost/dll/shared_library.hpp>
 
 
 namespace tl
@@ -235,6 +239,143 @@ std::tuple<jl_array_t*, jl_array_t*> make_jl_strmap_arr(const t_cont<t_str, t_st
 
 	return std::make_tuple(pArrKey, pArrVal);
 }
+// ----------------------------------------------------------------------------
+
+
+
+
+// ----------------------------------------------------------------------------
+// dynamic loading of libjulia, wraps (a subset of) the Julia native API
+// ----------------------------------------------------------------------------
+class LibJulia
+{
+	public:
+		LibJulia(const std::string& name = "libjulia") :
+			m_lib{name,
+			boost::dll::load_mode::search_system_folders | boost::dll::load_mode::append_decorations |
+			boost::dll::load_mode::rtld_lazy | boost::dll::load_mode::rtld_global}
+		{
+			try
+			{
+				if(!IsLoaded())
+					return;
+
+				this->jl_init = m_lib.get<void()>("jl_init__threading");
+				if(!this->jl_init)
+					this->jl_init = m_lib.get<void()>("jl_init");
+
+				this->jl_ver_string = m_lib.get<decltype(::jl_ver_string)>("jl_ver_string");
+
+				this->jl_get_global = m_lib.get<decltype(::jl_get_global)>("jl_get_global");
+				this->jl_symbol = m_lib.get<decltype(::jl_symbol)>("jl_symbol");
+				this->jl_typeof_str = m_lib.get<decltype(::jl_typeof_str)>("jl_typeof_str");
+
+				this->jl_call0 = m_lib.get<decltype(::jl_call0)>("jl_call0");
+				this->jl_call1 = m_lib.get<decltype(::jl_call1)>("jl_call1");
+				this->jl_call2 = m_lib.get<decltype(::jl_call2)>("jl_call2");
+				this->jl_call = m_lib.get<decltype(::jl_call)>("jl_call");
+
+				this->jl_eval_string = m_lib.get<decltype(::jl_eval_string)>("jl_eval_string");
+				this->jl_string_ptr = m_lib.get<decltype(::jl_string_ptr)>("jl_string_ptr");
+				this->jl_cstr_to_string = m_lib.get<decltype(::jl_cstr_to_string)>("jl_cstr_to_string");
+
+				this->jl_arrayref = m_lib.get<decltype(::jl_arrayref)>("jl_arrayref");
+
+				this->jl_box_int8 = m_lib.get<decltype(::jl_box_int8)>("jl_box_int8");
+				this->jl_box_int16 = m_lib.get<decltype(::jl_box_int16)>("jl_box_int16");
+				this->jl_box_int32 = m_lib.get<decltype(::jl_box_int32)>("jl_box_int32");
+				this->jl_box_int64 = m_lib.get<decltype(::jl_box_int64)>("jl_box_int64");
+				this->jl_box_uint8 = m_lib.get<decltype(::jl_box_uint8)>("jl_box_uint8");
+				this->jl_box_uint16 = m_lib.get<decltype(::jl_box_uint16)>("jl_box_uint16");
+				this->jl_box_uint32 = m_lib.get<decltype(::jl_box_uint32)>("jl_box_uint32");
+				this->jl_box_uint64 = m_lib.get<decltype(::jl_box_uint64)>("jl_box_uint64");
+				this->jl_box_float32 = m_lib.get<decltype(::jl_box_float32)>("jl_box_float32");
+				this->jl_box_float64 = m_lib.get<decltype(::jl_box_float64)>("jl_box_float64");
+				this->jl_box_voidpointer = m_lib.get<decltype(::jl_box_voidpointer)>("jl_box_voidpointer");
+				this->jl_box_bool = m_lib.get<decltype(::jl_box_bool)>("jl_box_bool");
+				this->jl_box_char = m_lib.get<decltype(::jl_box_char)>("jl_box_char");
+
+				this->jl_unbox_int8 = m_lib.get<decltype(::jl_unbox_int8)>("jl_unbox_int8");
+				this->jl_unbox_int16 = m_lib.get<decltype(::jl_unbox_int16)>("jl_unbox_int16");
+				this->jl_unbox_int32 = m_lib.get<decltype(::jl_unbox_int32)>("jl_unbox_int32");
+				this->jl_unbox_int64 = m_lib.get<decltype(::jl_unbox_int64)>("jl_unbox_int64");
+				this->jl_unbox_uint8 = m_lib.get<decltype(::jl_unbox_uint8)>("jl_unbox_uint8");
+				this->jl_unbox_uint16 = m_lib.get<decltype(::jl_unbox_uint16)>("jl_unbox_uint16");
+				this->jl_unbox_uint32 = m_lib.get<decltype(::jl_unbox_uint32)>("jl_unbox_uint32");
+				this->jl_unbox_uint64 = m_lib.get<decltype(::jl_unbox_uint64)>("jl_unbox_uint64");
+				this->jl_unbox_float32 = m_lib.get<decltype(::jl_unbox_float32)>("jl_unbox_float32");
+				this->jl_unbox_float64 = m_lib.get<decltype(::jl_unbox_float64)>("jl_unbox_float64");
+				this->jl_unbox_voidpointer = m_lib.get<decltype(::jl_unbox_voidpointer)>("jl_unbox_voidpointer");
+				this->jl_unbox_bool = m_lib.get<decltype(::jl_unbox_bool)>("jl_unbox_bool");
+
+				m_ok = 1;
+			}
+			catch(const std::exception& ex)
+			{
+				m_ok = 0;
+				throw;
+			}
+		}
+
+
+		bool IsLoaded() const { return m_lib.is_loaded(); }
+		bool IsOk() const { return IsLoaded() && m_ok; }
+
+		std::string GetFileName() const { return m_lib.location().string(); }
+
+
+	protected:
+		bool m_ok = 0;
+		boost::dll::shared_library m_lib;
+
+
+	public:
+		// wrapped jl functions
+		std::function<void()> jl_init = nullptr;
+		std::function<decltype(::jl_ver_string)> jl_ver_string = nullptr;
+
+		std::function<decltype(::jl_get_global)> jl_get_global = nullptr;
+		std::function<decltype(::jl_symbol)> jl_symbol = nullptr;
+		std::function<decltype(::jl_typeof_str)> jl_typeof_str = nullptr;
+
+		std::function<decltype(::jl_call0)> jl_call0 = nullptr;
+		std::function<decltype(::jl_call1)> jl_call1 = nullptr;
+		std::function<decltype(::jl_call2)> jl_call2 = nullptr;
+		std::function<decltype(::jl_call)> jl_call = nullptr;
+
+		std::function<decltype(::jl_eval_string)> jl_eval_string = nullptr;
+		std::function<decltype(::jl_string_ptr)> jl_string_ptr = nullptr;
+		std::function<decltype(::jl_cstr_to_string)> jl_cstr_to_string = nullptr;
+
+		std::function<decltype(::jl_arrayref)> jl_arrayref = nullptr;
+
+		std::function<decltype(::jl_box_int8)> jl_box_int8 = nullptr;
+		std::function<decltype(::jl_box_int16)> jl_box_int16 = nullptr;
+		std::function<decltype(::jl_box_int32)> jl_box_int32 = nullptr;
+		std::function<decltype(::jl_box_int64)> jl_box_int64 = nullptr;
+		std::function<decltype(::jl_box_uint8)> jl_box_uint8 = nullptr;
+		std::function<decltype(::jl_box_uint16)> jl_box_uint16 = nullptr;
+		std::function<decltype(::jl_box_uint32)> jl_box_uint32 = nullptr;
+		std::function<decltype(::jl_box_uint64)> jl_box_uint64 = nullptr;
+		std::function<decltype(::jl_box_float32)> jl_box_float32 = nullptr;
+		std::function<decltype(::jl_box_float64)> jl_box_float64 = nullptr;
+		std::function<decltype(::jl_box_voidpointer)> jl_box_voidpointer = nullptr;
+		std::function<decltype(::jl_box_bool)> jl_box_bool = nullptr;
+		std::function<decltype(::jl_box_char)> jl_box_char = nullptr;
+
+		std::function<decltype(::jl_unbox_int8)> jl_unbox_int8 = nullptr;
+		std::function<decltype(::jl_unbox_int16)> jl_unbox_int16 = nullptr;
+		std::function<decltype(::jl_unbox_int32)> jl_unbox_int32 = nullptr;
+		std::function<decltype(::jl_unbox_int64)> jl_unbox_int64 = nullptr;
+		std::function<decltype(::jl_unbox_uint8)> jl_unbox_uint8 = nullptr;
+		std::function<decltype(::jl_unbox_uint16)> jl_unbox_uint16 = nullptr;
+		std::function<decltype(::jl_unbox_uint32)> jl_unbox_uint32 = nullptr;
+		std::function<decltype(::jl_unbox_uint64)> jl_unbox_uint64 = nullptr;
+		std::function<decltype(::jl_unbox_float32)> jl_unbox_float32 = nullptr;
+		std::function<decltype(::jl_unbox_float64)> jl_unbox_float64 = nullptr;
+		std::function<decltype(::jl_unbox_voidpointer)> jl_unbox_voidpointer = nullptr;
+		std::function<decltype(::jl_unbox_bool)> jl_unbox_bool = nullptr;
+};
 // ----------------------------------------------------------------------------
 
 
