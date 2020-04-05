@@ -25,7 +25,7 @@ if(Minuit2_INCLUDE_DIRS AND Minuit2_LIBRARIES)
 	set(Minuit2_FOUND 1)
 
 	message("Minuit include directories: ${Minuit2_INCLUDE_DIRS}")
-	message("Minuit library: ${Minuit2_LIBRARIES}")	
+	message("Minuit library: ${Minuit2_LIBRARIES}")
 else()
 	set(Minuit2_FOUND 0)
 
