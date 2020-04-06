@@ -82,7 +82,7 @@ public:
 		if(!m_bEnabled) return;
 		begin_log();
 
-		std::vector<t_pairOstr>& vecOstrsTh = GetThreadOstrs();
+		const std::vector<t_pairOstr>& vecOstrsTh = GetThreadOstrs();
 		std::vector<t_pairOstr> vecOstrs = arrayunion({m_vecOstrs, vecOstrsTh});
 
 		for(t_pairOstr& pair : vecOstrs)
@@ -99,7 +99,7 @@ public:
 		if(!m_bEnabled) return;
 
 		inc_depth();
-		std::vector<t_pairOstr>& vecOstrsTh = GetThreadOstrs();
+		const std::vector<t_pairOstr>& vecOstrsTh = GetThreadOstrs();
 		std::vector<t_pairOstr> vecOstrs = arrayunion({m_vecOstrs, vecOstrsTh});
 
 		for(t_pairOstr& pair : vecOstrs)

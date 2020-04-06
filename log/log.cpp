@@ -86,7 +86,7 @@ void Log::begin_log()
 {
 	s_mtx.lock();
 
-	std::vector<t_pairOstr>& vecOstrsTh = GetThreadOstrs();
+	const std::vector<t_pairOstr>& vecOstrsTh = GetThreadOstrs();
 	std::vector<t_pairOstr> vecOstrs = arrayunion({m_vecOstrs, vecOstrsTh});
 
 	for(t_pairOstr &pairOstr : vecOstrs)
@@ -133,7 +133,7 @@ void Log::begin_log()
 
 void Log::end_log()
 {
-        std::vector<t_pairOstr>& vecOstrsTh = GetThreadOstrs();
+        const std::vector<t_pairOstr>& vecOstrsTh = GetThreadOstrs();
         std::vector<t_pairOstr> vecOstrs = arrayunion({m_vecOstrs, vecOstrsTh});
 
 	for(t_pairOstr& pairOstr : vecOstrs)
@@ -192,7 +192,13 @@ Log::~Log()
 
 std::vector<Log::t_pairOstr>& Log::GetThreadOstrs()
 {
-	return m_mapOstrsTh[std::this_thread::get_id()];
+	static const std::vector<Log::t_pairOstr> empty;
+
+	t_mapthreadOstrs::iterator iter = m_mapOstrsTh.find(std::this_thread::get_id());
+	if(iter == m_mapOstrsTh.end())
+		iter = m_mapOstrsTh.insert({std::this_thread::get_id(), std::vector<t_pairOstr>()}).first;
+
+	return iter->second;
 }
 
 
