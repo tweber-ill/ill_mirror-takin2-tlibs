@@ -281,7 +281,7 @@ void metrop(
 	// calculate energy
 	auto calcE = [dJ](const t_arr& arr,
 		const t_dim& idxSpin, const std::vector<t_dim>& vecNN,
-		bool bFlip=0) -> t_real
+		bool bFlip) -> t_real
 	{
 		t_real dE = t_real(0);
 		bool bSpin = arr(idxSpin);

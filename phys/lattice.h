@@ -48,6 +48,8 @@ class Lattice
 		Lattice(T a, T b, T c, T alpha, T beta, T gamma);
 		Lattice(const t_vec& vec0, const t_vec& vec1, const t_vec& vec2);
 		Lattice(const Lattice<T>& lattice);
+		const Lattice<T>& operator=(const Lattice<T>& lattice);
+
 		Lattice() = default;
 		~Lattice() = default;
 
@@ -122,9 +124,17 @@ Lattice<T>::Lattice(const t_vec& vec0, const t_vec& vec1, const t_vec& vec2)
 template<typename T>
 Lattice<T>::Lattice(const Lattice<T>& lattice)
 {
+	this->operator=(lattice);
+}
+
+
+template<typename T>
+const Lattice<T>& Lattice<T>::operator=(const Lattice<T>& lattice)
+{
 	this->m_vecs[0] = lattice.m_vecs[0];
 	this->m_vecs[1] = lattice.m_vecs[1];
 	this->m_vecs[2] = lattice.m_vecs[2];
+	return *this;
 }
 
 

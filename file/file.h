@@ -79,7 +79,7 @@ std::pair<bool, std::shared_ptr<T[]>> get_file_mem(std::basic_istream<t_char>& i
 
 	istr.seekg(offs, std::ios_base::beg);
 	istr.read((char*)ptr.get(), len*sizeof(T));
-	if(istr.gcount() != len*sizeof(T))
+	if(istr.gcount() != std::streamsize(len*sizeof(T)))
 		ok = false;
 
 	// move back to original position
