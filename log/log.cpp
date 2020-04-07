@@ -184,6 +184,7 @@ Log::Log(const std::string& strInfo, LogColor col, std::ostream* pOstr)
 Log::~Log()
 {
 	std::lock_guard<decltype(s_mtx)> _lck(s_mtx);
+	//std::cerr << "Removing " << m_strInfo << " logger." << std::endl;
 
 	m_mapOstrsTh.clear();
 	m_vecOstrs.clear();

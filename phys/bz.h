@@ -181,9 +181,8 @@ class Brillouin3D
 					return std::make_pair(true, planeperp);
 				});
 			}
-			poolMiddlePerps.StartTasks();
 
-			for(auto& fut : poolMiddlePerps.GetFutures())
+			for(auto& fut : poolMiddlePerps.GetResults())
 			{
 				auto pair = fut.get();
 				if(pair.first)
@@ -219,11 +218,10 @@ class Brillouin3D
 					}
 				}
 			}
-			poolIntersections.StartTasks();
 
 			std::size_t iVertsRemoved = 0;
 			Rt<T, 3, 8, 0> rt;
-			for(auto& fut : poolIntersections.GetFutures())
+			for(auto& fut : poolIntersections.GetResults())
 			{
 				auto pair = fut.get();
 				if(pair.first)
@@ -274,12 +272,11 @@ class Brillouin3D
 					return std::make_pair(!bRemoveVertex, iVert);
 				});
 			}
-			poolVerts.StartTasks();
 
 			std::vector<t_vec<T>> vecNewVertices;
 			vecNewVertices.reserve(m_vecVertices.size());
 
-			for(auto& fut : poolVerts.GetFutures())
+			for(auto& fut : poolVerts.GetResults())
 			{
 				auto pair = fut.get();
 				if(pair.first)
@@ -315,9 +312,8 @@ class Brillouin3D
 					return std::make_tuple(bOk, vecPoly, plane);
 				});
 			}
-			poolPolys.StartTasks();
 
-			for(auto& fut : poolPolys.GetFutures())
+			for(auto& fut : poolPolys.GetResults())
 			{
 				auto tup = fut.get();
 				if(std::get<0>(tup))
