@@ -36,7 +36,7 @@ class ThreadPool
 
 	protected:
 		boost::asio::thread_pool m_tp;
-		std::mutex m_mtx;
+		std::mutex m_mtx, m_mtxStart;
 
 		// list of wrapped function to be executed
 		t_task m_lstTasks;
@@ -44,6 +44,7 @@ class ThreadPool
 		// futures with function return values
 		t_fut m_lstFutures;
 
+		// function to run before each thread (not task)
 		void (*m_pThStartFunc)() = nullptr;
 
 
@@ -76,8 +77,18 @@ class ThreadPool
 
 			boost::asio::post(m_tp, [this, thetask]() -> void
 			{
-				if(m_pThStartFunc)
-					(*m_pThStartFunc)();
+				{
+					// ensure that this is only called per-thread, not per-task
+					std::lock_guard<std::mutex> lockStart(m_mtxStart);
+
+					thread_local bool bThreadAlreadySeen{0};
+					if(m_pThStartFunc && !bThreadAlreadySeen)
+					{
+						bThreadAlreadySeen = 1;
+						(*m_pThStartFunc)();
+					}
+				}
+
 				(*thetask)();
 			});
 		}
