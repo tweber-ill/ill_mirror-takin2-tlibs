@@ -228,12 +228,14 @@ t_str get_file_nodir(const t_str& str, bool bToLower=0)
 template<class t_str=std::string>
 bool str_is_equal(const t_str& str0, const t_str& str1, bool bCase=0)
 {
+	std::locale loc;
+
 #ifndef NO_BOOST
 
 	if(bCase)
 		return algo::equals(str0, str1, algo::is_equal());
 	else
-		return algo::equals(str0, str1, algo::is_iequal(std::locale()));
+		return algo::equals(str0, str1, algo::is_iequal(loc));
 
 #else
 
@@ -242,7 +244,6 @@ bool str_is_equal(const t_str& str0, const t_str& str1, bool bCase=0)
 
 	if(bCase) return str0==str1;
 
-	std::locale loc;
 	for(std::size_t i=0; i<str0.size(); ++i)
 	{
 		if(std::tolower(str0[i], loc) != std::tolower(str1[i], loc))
@@ -268,19 +269,20 @@ bool str_is_equal_to_either(const t_str& str0,
 template<class t_str=std::string>
 bool str_contains(const t_str& str, const t_str& strSub, bool bCase=0)
 {
+	std::locale loc;
+
 #ifndef NO_BOOST
 
 	if(bCase)
 		return algo::contains(str, strSub, algo::is_equal());
 	else
-		return algo::contains(str, strSub, algo::is_iequal(std::locale()));
+		return algo::contains(str, strSub, algo::is_iequal(loc));
 
 #else
 
 	if(bCase)
 		return str.find(strSub) != t_str::npos;
 
-	std::locale loc;
 	t_str strLower = str_to_lower(str);
 	t_str strSubLower = str_to_lower(strSub);
 
@@ -473,12 +475,14 @@ t_str insert_before(const t_str& str, const t_str& strChar, const t_str& strInse
 template<class t_str=std::string>
 bool begins_with(const t_str& str, const t_str& strBeg, bool bCase=1)
 {
+	std::locale loc;
+
 #ifndef NO_BOOST
 
 	if(bCase)
 		return algo::starts_with(str, strBeg, algo::is_equal());
 	else
-		return algo::starts_with(str, strBeg, algo::is_iequal(std::locale()));
+		return algo::starts_with(str, strBeg, algo::is_iequal(loc));
 
 #else
 
@@ -487,7 +491,6 @@ bool begins_with(const t_str& str, const t_str& strBeg, bool bCase=1)
 	if(str.length() < iLenBeg)
 		return false;
 
-	std::locale loc;
 	for(std::size_t i=0; i<iLenBeg; ++i)
 	{
 		typename t_str::value_type c1, c2;
@@ -507,12 +510,14 @@ bool begins_with(const t_str& str, const t_str& strBeg, bool bCase=1)
 template<class t_str=std::string>
 bool ends_with(const t_str& str, const t_str& strEnd, bool bCase=1)
 {
+	std::locale loc;
+
 #ifndef NO_BOOST
 
 	if(bCase)
 		return algo::ends_with(str, strEnd, algo::is_equal());
 	else
-		return algo::ends_with(str, strEnd, algo::is_iequal(std::locale()));
+		return algo::ends_with(str, strEnd, algo::is_iequal(loc));
 
 #else
 
@@ -522,7 +527,6 @@ bool ends_with(const t_str& str, const t_str& strEnd, bool bCase=1)
 	if(iLen < iLenEnd)
 		return false;
 
-	std::locale loc;
 	for(std::size_t i=iLen-iLenEnd, j=0; i<iLen; ++i, ++j)
 	{
 		typename t_str::value_type c1, c2;
