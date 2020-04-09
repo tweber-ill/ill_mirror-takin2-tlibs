@@ -7,7 +7,7 @@
 find_path(Minuit2_INCLUDE_DIRS
 	NAMES MnMigrad.h
 	PATH_SUFFIXES root Minuit2 Minuit root/Minuit2 root/Minuit
-	HINTS /usr/local/include/Minuit2 /usr/include/Minuit2 /usr/local/include/root/Minuit2 /usr/include/root/Minuit2 /opt/local/include/root/Minuit2
+	HINTS /usr/local/include/ /usr/local/include/Minuit2 /usr/include/ /usr/include/Minuit2 /usr/local/include/root/Minuit2 /usr/include/root/Minuit2 /opt/local/include/root/Minuit2
 	DOC "Root/Minuit2 include directories"
 )
 
@@ -17,7 +17,7 @@ list(APPEND Minuit2_INCLUDE_DIRS "${Minuit2_INCLUDE_DIRS}/..")
 
 find_library(Minuit2_LIBRARIES
 	NAMES Minuit2
-	HINTS /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /usr/lib64/root /usr/lib/root /usr/lib32/root
+	HINTS /usr/local/lib64 /usr/local/lib64/root /usr/local/lib /usr/local/lib/root /usr/lib64 /usr/lib64/root /usr/lib /usr/lib/root /opt/local/lib /opt/local/lib/root /usr/lib32 /usr/lib32/root
 	DOC "Minuit2 library"
 )
 
