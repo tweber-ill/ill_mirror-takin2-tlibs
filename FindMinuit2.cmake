@@ -7,7 +7,7 @@
 find_path(Minuit2_INCLUDE_DIRS
 	NAMES MnMigrad.h
 	PATH_SUFFIXES root Minuit2 Minuit root/Minuit2 root/Minuit
-	HINTS /usr/local/include/ /usr/local/include/Minuit2 /usr/include/ /usr/include/Minuit2 /usr/local/include/root/Minuit2 /usr/include/root/Minuit2 /opt/local/include/root/Minuit2
+	HINTS /usr/local/include/ /usr/include/ /opt/local/include
 	DOC "Root/Minuit2 include directories"
 )
 
