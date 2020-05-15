@@ -47,7 +47,7 @@ include_directories("${Minuit2_INCLUDE_DIRS}")
 file(GLOB lang "lang/*.cpp" "lang/*.h" "${PROJECT_SOURCE_DIR}/script.cc" "${PROJECT_SOURCE_DIR}/tokens.h")
 file(GLOB runtime "runtime/*.cpp" "runtime/*.h")
 file(GLOB tlibs
-	"../math/linalg2.cpp" "../math/rand.cpp" "../math/fourier.cpp"
+	"../math/linalg2.cpp" "../math/rand.cpp"
 	"../string/spec_char.cpp"
 	"../gfx/gnuplot.cpp"
 	"../file/file.cpp"
@@ -55,17 +55,17 @@ file(GLOB tlibs
 )
 
 
-add_executable(hermelin 
+add_executable(hermelin
 	${lang} ${runtime} ${tlibs} "${PROJECT_SOURCE_DIR}/script.cc" "${PROJECT_SOURCE_DIR}/tokens.h"
 )
 
-target_link_libraries(hermelin 
+target_link_libraries(hermelin
 	${Boost_LIBRARIES} Threads::Threads ${Minuit2_LIBRARIES}
 )
 
 
-add_custom_command(TARGET hermelin POST_BUILD 
-	COMMAND strip hermelin 
+add_custom_command(TARGET hermelin POST_BUILD
+	COMMAND strip hermelin
 	MAIN_DEPENDENCY hermelin
 )
 

@@ -20,7 +20,7 @@ module_init()
 
 # omega = phi / tau
 phi2dE(phi, tau)
-{ 
+{
 	return phi*hbar_mueVps / tau;
 }
 
