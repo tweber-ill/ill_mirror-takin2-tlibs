@@ -22,12 +22,12 @@ find_library(Minuit2_LIBRARIES
 )
 
 if(Minuit2_INCLUDE_DIRS AND Minuit2_LIBRARIES)
-	set(Minuit2_FOUND 1)
+	set(Minuit2_FOUND TRUE)
 
 	message("Minuit include directories: ${Minuit2_INCLUDE_DIRS}")
 	message("Minuit library: ${Minuit2_LIBRARIES}")
 else()
-	set(Minuit2_FOUND 0)
+	set(Minuit2_FOUND FALSE)
 
 	message("Error: Minuit2 could not be found!")
 endif()
