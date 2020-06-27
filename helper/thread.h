@@ -8,6 +8,7 @@
 #ifndef __TLIBS_THREAD_H__
 #define __TLIBS_THREAD_H__
 
+#include <boost/asio.hpp>
 #include <future>
 #include <thread>
 #include <mutex>
@@ -16,7 +17,6 @@
 #include <algorithm>
 #include <type_traits>
 #include <memory>
-#include <boost/asio.hpp>
 
 
 namespace tl {

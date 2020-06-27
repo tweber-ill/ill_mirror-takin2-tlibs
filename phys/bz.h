@@ -8,8 +8,8 @@
 #ifndef __BZ_H__
 #define __BZ_H__
 
-#include "../helper/exception.h"
 #include "../helper/thread.h"
+#include "../helper/exception.h"
 #include "../math/math.h"
 #include "../math/rt.h"
 #include "../math/geo.h"
