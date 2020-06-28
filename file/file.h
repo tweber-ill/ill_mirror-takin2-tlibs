@@ -67,11 +67,12 @@ inline std::size_t get_file_size(const std::basic_string<typename fs::path::valu
  * @param len: length in size of T
  */
 template <class T, class t_char = char>
-std::pair<bool, std::shared_ptr<T[]>> get_file_mem(std::basic_istream<t_char>& istr, std::size_t offs, std::size_t len=1)
+std::pair<bool, std::shared_ptr<T>> get_file_mem(
+	std::basic_istream<t_char>& istr, std::size_t offs, std::size_t len=1)
 {
 	bool ok = true;
 
-	std::shared_ptr<T[]> ptr(new T[len]);
+	std::shared_ptr<T> ptr(new T[len], [](T *pt){ delete[] pt; });
 	if(!ptr)
 		return std::make_pair(false, ptr);
 
