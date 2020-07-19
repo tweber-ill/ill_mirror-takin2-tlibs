@@ -19,13 +19,19 @@
 #ifndef int_p_NULL
 	#define int_p_NULL reinterpret_cast<int*>(0)
 #endif
-#include <boost/gil/gil_all.hpp>
-#include <boost/gil/extension/io/png_io.hpp>
+#include <boost/gil.hpp>
+
+#include <boost/gil/extension/io/png.hpp>
+#include <boost/gil/extension/io/png/old.hpp>
+
 #ifndef NO_JPEG
-	#include <boost/gil/extension/io/jpeg_io.hpp>
+	#include <boost/gil/extension/io/jpeg.hpp>
+	#include <boost/gil/extension/io/jpeg/old.hpp>
 #endif
+
 #ifndef NO_TIFF
-	#include <boost/gil/extension/io/tiff_io.hpp>
+	#include <boost/gil/extension/io/tiff.hpp>
+	#include <boost/gil/extension/io/tiff/old.hpp>
 #endif
 
 

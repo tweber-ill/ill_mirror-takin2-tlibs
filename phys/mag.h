@@ -371,7 +371,7 @@ void metrop(
 			*pS += (*(pDat+iElem) ? t_real(1) : t_real(-1));
 
 		// normalise
-		*pS /= std::pow(2., t_real(DIM));			// NN
+		*pS /= std::pow(2., t_real(DIM));		// NN
 		for(std::size_t iDim=0; iDim<DIM; ++iDim)	// N
 			*pS /= t_real(arrDims[iDim]);
 	}

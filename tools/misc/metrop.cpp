@@ -4,11 +4,11 @@
  * @date 8-oct-16
  * @license GPLv2 or GPLv3
  */
-// gcc -march=native -O3 -std=c++11 -DNO_JPEG -DNO_TIFF -o metrop metrop.cpp ../../log/log.cpp ../../math/rand.cpp -lstdc++ -lm -lpng
+// g++ -march=native -O2 -std=c++11 -DNO_JPEG -DNO_TIFF -o metrop metrop.cpp ../../log/log.cpp ../../math/rand.cpp -lpng
 
-#include "../../math/mag.h"
+#include "../../phys/mag.h"
 #include "../../math/rand.h"
-#include "../../math/units.h"
+#include "../../phys/units.h"
 #include "../../gfx/gil.h"
 #include "../../helper/array.h"
 #include <iostream>
