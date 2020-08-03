@@ -2,6 +2,7 @@
  * simple stopwatch for debugging
  * @author Tobias Weber <tobias.weber@tum.de>
  * @date jan-2015 - 2018
+ * @license GPLv2 or GPLv3
  */
 
 #ifndef __STOPWATCH_H__
