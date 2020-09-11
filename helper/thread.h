@@ -43,7 +43,7 @@ class ThreadPool
 #ifdef USE_OWN_THREADPOOL
 		std::list<std::unique_ptr<std::thread>> m_lstThreads;
 		unsigned int m_tp;	// dummy variable to avoid some ifdefs
-		
+
 		// signal to start jobs
 		std::promise<void> m_signalStartIn;
 		std::future<void> m_signalStartOut = std::move(m_signalStartIn.get_future());
@@ -175,7 +175,7 @@ class ThreadPool
 		{
 			// ensure that this is only called per-thread, not per-task
 			std::lock_guard<std::mutex> lockStart(m_mtxStart);
-			
+
 			thread_local bool bThreadAlreadySeen{0};
 			if(m_pThStartFunc && !bThreadAlreadySeen)
 			{
