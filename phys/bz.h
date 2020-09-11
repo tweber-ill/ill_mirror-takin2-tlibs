@@ -181,6 +181,7 @@ class Brillouin3D
 					return std::make_pair(true, planeperp);
 				});
 			}
+			poolMiddlePerps.Start();
 
 			for(auto& fut : poolMiddlePerps.GetResults())
 			{
@@ -218,6 +219,7 @@ class Brillouin3D
 					}
 				}
 			}
+			poolIntersections.Start();
 
 			std::size_t iVertsRemoved = 0;
 			Rt<T, 3, 8, 0> rt;
@@ -272,6 +274,7 @@ class Brillouin3D
 					return std::make_pair(!bRemoveVertex, iVert);
 				});
 			}
+			poolVerts.Start();
 
 			std::vector<t_vec<T>> vecNewVertices;
 			vecNewVertices.reserve(m_vecVertices.size());
@@ -312,6 +315,7 @@ class Brillouin3D
 					return std::make_tuple(bOk, vecPoly, plane);
 				});
 			}
+			poolPolys.Start();
 
 			for(auto& fut : poolPolys.GetResults())
 			{
