@@ -8,6 +8,7 @@
 #ifndef __TLIBS_THREAD_H__
 #define __TLIBS_THREAD_H__
 
+
 //#define USE_OWN_THREADPOOL
 
 #ifndef USE_OWN_THREADPOOL
@@ -30,7 +31,7 @@ namespace tl {
 /**
  * thread pool
  */
-template<class t_func>
+template<class t_func, class t_startfunc = void(void)>
 class ThreadPool
 {
 	public:
@@ -60,12 +61,12 @@ class ThreadPool
 		t_fut m_lstFutures;
 
 		// function to run before each thread (not task)
-		void (*m_pThStartFunc)() = nullptr;
+		t_startfunc *m_pThStartFunc = nullptr;
 
 
 	public:
 		ThreadPool(unsigned int iNumThreads = std::thread::hardware_concurrency(),
-			void (*pThStartFunc)() = nullptr)
+			t_startfunc* pThStartFunc = nullptr)
 			: m_tp{iNumThreads}, m_pThStartFunc{pThStartFunc}
 		{
 #ifdef USE_OWN_THREADPOOL
