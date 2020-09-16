@@ -146,6 +146,7 @@ public:
 		return false;
 	}
 
+
 	bool Load(const t_ch* pcFile, PropType ty)
 	{
 		std::basic_ifstream<t_ch> ifstr(pcFile);
@@ -164,6 +165,7 @@ public:
 		if(!*pIfstr) return false;
 		return Load(*pIfstr, ty);
 	}
+
 
 	bool Load(std::basic_istream<t_ch>& istr, PropType ty)
 	{
@@ -217,6 +219,7 @@ public:
 		return false;
 	}
 
+
 	bool Save(const t_ch* pcFile, PropType ty, Compressor comp=Compressor::INVALID) const
 	{
 		std::basic_ofstream<t_ch> ofstr(pcFile);
@@ -235,6 +238,7 @@ public:
 		if(!*pOfstr) return false;
 		return Save(*pOfstr, ty);
 	}
+
 
 	bool Save(std::basic_ostream<t_ch>& ofstr, PropType ty) const
 	{
@@ -306,11 +310,13 @@ public:
 		return tOut;
 	}
 
+
 	template<typename T>
 	T Query(const t_str& _strAddr, const T def, bool *pbOk=nullptr) const
 	{
 		return Query<T>(_strAddr, &def, pbOk);
 	}
+
 
 	template<typename T>
 	boost::optional<T> QueryOpt(const t_str& strAddr) const
@@ -319,6 +325,7 @@ public:
 		T tVal = Query<T>(strAddr, nullptr, &bOk);
 		return bOk ? boost::optional<T>(std::move(tVal)) : boost::optional<T>();
 	}
+
 
 #if !defined NO_STR_PARSER
 	template<typename T>
@@ -346,7 +353,9 @@ public:
 	{
 		return QueryAndParse<T>(_strAddr, &def, pbOk);
 	}
+
 #else 	// simply call normal query function
+
 	template<typename T>
 	T Query(const t_str& _strAddr, const T* pDef=nullptr, bool *pbOk=nullptr) const
 	{
@@ -358,7 +367,9 @@ public:
 	{
 		return Query<T>(_strAddr, def, pbOk);
 	}
+
 #endif
+
 
 	/**
 	 * get children to a node
@@ -379,6 +390,7 @@ public:
 		return vecRet;
 	}
 
+
 	/**
 	 * get a list of children to a node
 	 */
@@ -397,6 +409,7 @@ public:
 
 		return vecRet;
 	}
+
 
 	/**
 	 * get a list of child values to a node
@@ -418,6 +431,7 @@ public:
 		return vecRet;
 	}
 
+
 	bool Exists(const t_str& strAddr) const
 	{
 		bool bOk = 0;
@@ -427,6 +441,7 @@ public:
 
 		return bOk;
 	}
+
 
 	bool PathExists(const t_str& strAddr) const
 	{
@@ -451,6 +466,7 @@ public:
 		}
 	}
 
+
 	template<class t_map = std::map<t_str, t_str>>
 	void Add(const t_map& map)
 	{
@@ -466,6 +482,7 @@ public:
 			Add<t_str>(std::move(strKey), std::move(strVal));
 		}
 	}
+
 
 	friend std::ostream& operator<<(std::ostream& ostr,
 		const Prop<_t_str, bCaseSensitive>& prop)
