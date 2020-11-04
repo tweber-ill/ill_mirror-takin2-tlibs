@@ -56,6 +56,8 @@ class FileInstrBase
 		virtual const t_vecVals& GetCol(const std::string& strName, std::size_t *pIdx=0) const = 0;
 		virtual t_vecVals& GetCol(const std::string& strName, std::size_t *pIdx=0) = 0;
 
+		virtual std::array<t_real, 4> GetPosHKLE() const = 0;	// zero pos.
+
 		virtual std::size_t GetScanCount() const = 0;
 		virtual std::array<t_real, 5> GetScanHKLKiKf(std::size_t i) const = 0;
 		virtual bool MergeWith(const FileInstrBase<t_real>* pDat);
@@ -163,7 +165,7 @@ class FilePsi : public FileInstrBase<_t_real>
 		virtual t_real GetKFix() const override;
 		virtual bool IsKiFixed() const override;
 
-		std::array<t_real, 4> GetPosHKLE() const;	// zero pos.
+		virtual std::array<t_real, 4> GetPosHKLE() const override;	// zero pos.
 		std::array<t_real, 4> GetDeltaHKLE() const;	// scan steps
 
 		virtual std::size_t GetScanCount() const override;
@@ -251,6 +253,8 @@ class FileFrm : public FileInstrBase<_t_real>
 		virtual std::array<t_real, 3> GetScatterPlane0() const override;
 		virtual std::array<t_real, 3> GetScatterPlane1() const override;
 
+		virtual std::array<t_real, 4> GetPosHKLE() const override;	// zero pos.
+
 		virtual t_real GetKFix() const override;
 		virtual bool IsKiFixed() const override;
 
@@ -316,6 +320,8 @@ class FileMacs : public FileInstrBase<_t_real>
 		virtual std::array<bool, 3> GetScatterSenses() const override;
 		virtual std::array<t_real, 3> GetScatterPlane0() const override;
 		virtual std::array<t_real, 3> GetScatterPlane1() const override;
+
+		virtual std::array<t_real, 4> GetPosHKLE() const override;	// zero pos.
 
 		virtual t_real GetKFix() const override;
 		virtual bool IsKiFixed() const override;
@@ -383,6 +389,8 @@ class FileTrisp : public FileInstrBase<_t_real>
 		virtual std::array<t_real, 3> GetScatterPlane0() const override;
 		virtual std::array<t_real, 3> GetScatterPlane1() const override;
 
+		virtual std::array<t_real, 4> GetPosHKLE() const override;	// zero pos.
+
 		virtual t_real GetKFix() const override;
 		virtual bool IsKiFixed() const override;
 
@@ -443,6 +451,8 @@ class FileRaw : public FileInstrBase<_t_real>
 		virtual std::array<bool, 3> GetScatterSenses() const override;
 		virtual std::array<t_real, 3> GetScatterPlane0() const override;
 		virtual std::array<t_real, 3> GetScatterPlane1() const override;
+
+		virtual std::array<t_real, 4> GetPosHKLE() const override;	// zero pos.
 
 		virtual t_real GetKFix() const override;
 		virtual bool IsKiFixed() const override;
