@@ -1079,9 +1079,9 @@ void FileFrm<t_real>::ReadHeader(std::istream& istr)
 			if(m_strInstrIdent == "")
 			{
 				const std::string strRegex = R"REX(([a-z0-9]+)\_responsible)REX";
-				std::regex rx(strRegex, std::regex::ECMAScript|std::regex_constants::icase);
-				std::smatch m;
-				if(std::regex_search(pairLine.first, m, rx) && m.size()>=2)
+				rex::regex rx(strRegex, rex::regex::ECMAScript|rex::regex_constants::icase);
+				rex::smatch m;
+				if(rex::regex_search(pairLine.first, m, rx) && m.size()>=2)
 					m_strInstrIdent = m[1];
 			}
 		}
