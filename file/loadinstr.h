@@ -233,6 +233,7 @@ class FileFrm : public FileInstrBase<_t_real>
 		t_mapParams m_mapParams;
 		t_vecColNames m_vecQuantities, m_vecUnits;
 		t_vecDat m_vecData;
+		std::string m_strInstrIdent;
 
 	public:
 		FileFrm() = default;

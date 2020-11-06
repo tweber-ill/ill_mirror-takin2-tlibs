@@ -1060,9 +1060,12 @@ void FileFrm<t_real>::ReadHeader(std::istream& istr)
 		strLine = strLine.substr(1);
 
 		std::pair<std::string, std::string> pairLine =
-				split_first<std::string>(strLine, ":", 1);
+			split_first<std::string>(strLine, ":", 1);
+
 		if(pairLine.first == "")
+		{
 			continue;
+		}
 		else
 		{
 			typename t_mapParams::iterator iter = m_mapParams.find(pairLine.first);
@@ -1071,6 +1074,16 @@ void FileFrm<t_real>::ReadHeader(std::istream& istr)
 				m_mapParams.insert(pairLine);
 			else
 				iter->second += ", " + pairLine.second;
+
+			// try to find instrument name
+			if(m_strInstrIdent == "")
+			{
+				const std::string strRegex = R"REX(([a-z0-9]+)\_responsible)REX";
+				std::regex rx(strRegex, std::regex::ECMAScript|std::regex_constants::icase);
+				std::smatch m;
+				if(std::regex_search(pairLine.first, m, rx) && m.size()>=2)
+					m_strInstrIdent = m[1];
+			}
 		}
 	}
 }
@@ -1269,6 +1282,7 @@ std::array<t_real, 3> FileFrm<t_real>::GetScatterPlane0() const
 	return std::array<t_real,3>{{vec[0],vec[1],vec[2]}};
 }
 
+
 template<class t_real>
 std::array<t_real, 3> FileFrm<t_real>::GetScatterPlane1() const
 {
@@ -1289,8 +1303,15 @@ std::array<t_real, 3> FileFrm<t_real>::GetScatterPlane1() const
 template<class t_real>
 std::array<t_real, 4> FileFrm<t_real>::GetPosHKLE() const
 {
-	// TODO: implement
-	return std::array<t_real,4>{{0,0,0,0}};
+	typename t_mapParams::const_iterator iter = m_mapParams.find(m_strInstrIdent + "_value");
+	if(iter == m_mapParams.end())
+		return std::array<t_real,4>{{0, 0, 0, 0}};
+
+	std::vector<t_real> vecPos = get_py_array<std::string, std::vector<t_real>>(iter->second);
+	if(vecPos.size() < 4)
+		return std::array<t_real,4>{{0, 0, 0, 0}};
+
+	return std::array<t_real,4>{{vecPos[0], vecPos[1], vecPos[2], vecPos[3]}};
 }
 
 
