@@ -19,7 +19,7 @@ const char* get_tlibs_version()
 const char* get_tlibs_infos()
 {
 	return "This is the tlibs template library.\n"
-		"Written by Tobias Weber <tobias.weber@tum.de>, 2012 - 2020.\n"
+		"Written by Tobias Weber <tobias.weber@tum.de>, 2012 - 2021.\n"
 		"License: GPLv2 or GPLv3.";
 }
 
