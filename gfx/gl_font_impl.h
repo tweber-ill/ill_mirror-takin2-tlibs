@@ -19,6 +19,7 @@
 #include "../helper/misc.h"
 #include "../string/string.h"
 
+#include <glext.h>
 #include <iomanip>
 
 
