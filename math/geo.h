@@ -882,6 +882,10 @@ t_cont<t_cont<t_vec>> verts_to_polyhedron(
 //------------------------------------------------------------------------------
 
 
+/**
+ * quadric
+ * see e.g.: (Arens 2015), ch. 21
+ */
 template<class T = double>
 class Quadric
 {
@@ -934,7 +938,7 @@ public:
 	 * @see https://mathworld.wolfram.com/QuadraticSurface.html
 	 * @returns [rank, rank_ext, signature, signature_ext]
 	 */
-	std::tuple<int,int, int,int,int, int,int,int> 
+	std::tuple<int,int, int,int,int, int,int,int>
 	ClassifyQuadric(T eps = tl::get_epsilon<T>()) const
 	{
 		// extended matrix
