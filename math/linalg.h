@@ -2227,7 +2227,7 @@ template<class t_mat = ublas::matrix<double>,
 
 /**
  * QR decomposition via householder reflections
- * @see (Scarpino 2011), pp. 269--272
+ * @see (Scarpino 2011), pp. 269-272
  */
 template<class t_mat = ublas::matrix<double>,
 	class t_vec = ublas::vector<typename t_mat::value_type>,
@@ -2256,7 +2256,7 @@ bool qr_decomp(const t_mat& M, t_mat& Q, t_mat& R)
 		t_vec vecE0 = zero_v<t_vec>(vec0.size());
 		vecE0[0] = veclen(vec0);
 
-		t_vec vecReflNorm = vec0-vecE0;
+		t_vec vecReflNorm = vec0 - vecE0;
 		t_mat matRefl = reflection_matrix(vecReflNorm);
 
 		A = prod_mm(matRefl, A);
@@ -2477,7 +2477,7 @@ get_minmax(const T& t)
 
 
 /**
- * Calculates the dominant eigenvector/eigenvalue for symmetric matrices
+ * calculates the dominant eigenvector/eigenvalue for symmetric matrices
  * @see (Bronstein 2008), equs. (4.148)-(4.151)
  */
 template<class t_mat = ublas::matrix<double>,
@@ -2517,7 +2517,7 @@ bool eigenvec_dominant_sym(const t_mat& mat, t_vec& evec, T& eval,
 
 
 /**
- * Calculates the least dominant eigenvector/eigenvalue for symmetric matrices
+ * calculates the least dominant eigenvector/eigenvalue for symmetric matrices
  * @see (Bronstein 2008), equs. (4.148)-(4.151)
  */
 template<class t_mat = ublas::matrix<double>,
@@ -2540,7 +2540,7 @@ bool eigenvec_least_dominant_sym(const t_mat& mat, t_vec& evec, T& eval,
 
 
 /**
- * Calculates the eigenvectors/eigenvalues for symmetric matrices
+ * calculates the eigenvectors/eigenvalues for symmetric matrices
  * ! for large matrices use eigenvec_sym from linalg2.h !
  */
 template<class t_mat = ublas::matrix<double>,

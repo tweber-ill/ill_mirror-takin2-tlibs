@@ -310,6 +310,7 @@ public:
 
 	/**
 	 * distance to a point
+	 * @see e.g.: (Arens 2015), p. 711
 	 */
 	T GetDist(const t_vec& vecPt) const
 	{
@@ -329,6 +330,7 @@ public:
 
 	/**
 	 * distance to line l1
+	 * @see e.g.: (Arens 2015), p. 711
 	 */
 	T GetDist(const Line<T>& l1) const
 	{
