@@ -1206,8 +1206,9 @@ bool is_centering_matrix(const t_mat& mat)
 
 
 /**
- * Euler-Rodrigues formula
+ * Rodrigues' formula
  * @see https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+ * @see (Merziger 1993), p. 208
  * @see (Arens 2015), p. 718 and p. 816
  */
 template<class mat_type = ublas::matrix<double>,
@@ -1436,6 +1437,7 @@ bool inverse(const mat_type& mat, mat_type& inv)
  * R = T^(-1) M T
  * bCongr==1: do a congruence trafo
  * bCongr==0: do a similarity trafo
+ * @see e.g.: (Merziger 1993), p. 202
  */
 template<class mat_type = ublas::matrix<double>>
 mat_type transform(const mat_type& mat, const mat_type& matTrafo, bool bCongr=0)
@@ -1457,6 +1459,7 @@ mat_type transform(const mat_type& mat, const mat_type& matTrafo, bool bCongr=0)
  * R = T M T^(-1)
  * bCongr==1: do a congruence trafo
  * bCongr==0: do a similarity trafo
+ * @see e.g.: (Merziger 1993), p. 202
  */
 template<class mat_type = ublas::matrix<double>>
 mat_type transform_inv(const mat_type& mat, const mat_type& matTrafo, bool bCongr=0)
@@ -1694,6 +1697,7 @@ matrix_type column_matrix(const container_type& vecs)
 
 /**
  * determinant
+ * @see e.g.: (Merziger 1993), p. 185
  * @see e.g.: https://en.wikipedia.org/wiki/Determinant
  */
 template<class t_mat/*=ublas::matrix<double>*/>

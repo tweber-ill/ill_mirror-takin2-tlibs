@@ -885,7 +885,8 @@ t_cont<t_cont<t_vec>> verts_to_polyhedron(
 
 /**
  * quadric
- * see e.g.: (Arens 2015), ch. 21
+ * @see e.g.: (Arens 2015), ch. 21
+ * @see e.g.: (Merziger 1993), p. 224
  */
 template<class T = double>
 class Quadric
