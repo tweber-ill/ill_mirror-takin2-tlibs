@@ -2186,6 +2186,7 @@ template<class t_mat = ublas::matrix<double>,
 
 /**
  * Householder reflection
+ * @see (Scarpino 2011), p. 268
  */
 template<class t_vec = ublas::vector<double>,
 	class t_mat = ublas::matrix<typename t_vec::value_type>,
@@ -2541,7 +2542,9 @@ bool eigenvec_least_dominant_sym(const t_mat& mat, t_vec& evec, T& eval,
 
 /**
  * calculates the eigenvectors/eigenvalues for symmetric matrices
- * ! for large matrices use eigenvec_sym from linalg2.h !
+ * using the qr algorithm
+ * ! for large matrices use eigenvec_sym  !
+ * @see https://en.wikipedia.org/wiki/QR_algorithm
  */
 template<class t_mat = ublas::matrix<double>,
 	class t_vec = ublas::vector<typename t_mat::value_type>,
