@@ -370,6 +370,7 @@ std::complex<T> structfact(const t_cont<t_vec>& lstAtoms, const t_vec& vecG,
 /**
  * Lorentz factor
  * @param twotheta Scattering angle in rad
+ * @see (Shirane 2002), pp. 170-172
  * @see e.g.: https://dictionary.iucr.org/Lorentz%E2%80%93polarization_correction
  */
 template<typename T=double>
@@ -383,6 +384,7 @@ T lorentz_factor(T twotheta)
 /**
  * Lorentz polarisation factor (only for x-rays)
  * @param twotheta Scattering angle in rad
+ * @see (Shirane 2002), pp. 170-172
  * @see e.g.: https://dictionary.iucr.org/Lorentz%E2%80%93polarization_correction
  */
 template<typename T=double>

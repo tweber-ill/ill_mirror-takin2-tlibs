@@ -16,7 +16,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}" ".")
 set(CMAKE_BINARY_DIR "${CMAKE_SOURCE_DIR}")
 #set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 
-find_package(Boost REQUIRED COMPONENTS iostreams system filesystem regex REQUIRED)
+find_package(Boost REQUIRED COMPONENTS iostreams system filesystem REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(Minuit2 REQUIRED)
@@ -31,10 +31,11 @@ set(CMAKE_AUTOUIC OFF)
 #message("CMake source dir: ${CMAKE_SOURCE_DIR}")
 #message("Binary dir: ${CMAKE_BINARY_DIR}")
 message("Install path prefix: ${CMAKE_INSTALL_PREFIX}")
+message("OpenGL include dir: \"${OPENGL_INCLUDE_DIR}\".")
 
 
 add_definitions(-DNDEBUG)
-add_definitions(-DUSE_IOSTR -DUSE_BOOST_REX)
+add_definitions(-DUSE_IOSTR)
 add_definitions(-DNO_LAPACK)
 #add_definitions(-DUSE_FFTW)
 add_definitions(-DINSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
@@ -45,7 +46,10 @@ include_directories("${PROJECT_SOURCE_DIR}" ".")
 include_directories("${Boost_INCLUDE_DIRS}/..")
 include_directories("${FREETYPE_INCLUDE_DIRS}")
 include_directories("${Minuit2_INCLUDE_DIRS}")
-include_directories("${OPENGL_INCLUDE_DIR}" "${OPENGL_INCLUDE_DIR}/GL" "${OPENGL_INCLUDE_DIR}/OpenGL")
+include_directories("${OPENGL_INCLUDE_DIR}" 
+	"${OPENGL_INCLUDE_DIR}/GL" 
+	"${OPENGL_INCLUDE_DIR}/OpenGL"
+	"${OPENGL_INCLUDE_DIR}/Headers")
 
 
 add_definitions(-std=c++11)
@@ -60,7 +64,7 @@ add_library(tlibs SHARED
 	file/tmp.cpp  file/loadinstr.cpp  file/x3d.cpp
 	log/log.cpp log/debug.cpp
 	helper/flags.cpp
-	math/fourier.cpp  math/linalg2.cpp  math/rand.cpp
+	math/linalg2.cpp  math/rand.cpp
 	net/tcp.cpp
 	string/spec_char.cpp  string/eval.cpp
 	gfx/gl.cpp  gfx/gnuplot.cpp
@@ -73,12 +77,12 @@ target_link_libraries(tlibs ${Boost_LIBRARIES} Threads::Threads
 )
 
 
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-	add_custom_command(TARGET tlibs POST_BUILD
-		COMMAND strip -v $<TARGET_FILE:tlibs>
-		MAIN_DEPENDENCY tlibs
-	)
-endif()
+#if(CMAKE_BUILD_TYPE STREQUAL "Release")
+#	add_custom_command(TARGET tlibs POST_BUILD
+#		COMMAND strip -v $<TARGET_FILE:tlibs>
+#		MAIN_DEPENDENCY tlibs
+#	)
+#endif()
 # -----------------------------------------------------------------------------
 
 
