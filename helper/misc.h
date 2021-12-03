@@ -192,11 +192,11 @@ struct sort_obj
 
 
 template<class T>
-bool comp_fkt(sort_obj<T> t0, sort_obj<T> t1)
+bool comp_fkt(const sort_obj<T>& t0, const sort_obj<T>& t1)
 { return t0.vec[0] < t1.vec[0]; }
 
 
-/** 
+/**
  * simultaneously sort two arrays
  */
 template<class Iter=double*>
@@ -223,7 +223,7 @@ void sort_2(Iter begin1, Iter end1, Iter begin2)
 }
 
 
-/** 
+/**
  * simultaneously sort three arrays
  */
 template<class Iter=double*>
