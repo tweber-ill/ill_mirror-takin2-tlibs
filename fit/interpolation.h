@@ -302,13 +302,14 @@ void find_peaks(std::size_t iLen, const T* _px, const T* _py, unsigned int iOrde
 	T eps = tl::get_epsilon<T>(), std::size_t iNumSpline = 512)
 {
 	// allocate memory
-	std::unique_ptr<T, std::default_delete<T[]>> uptrMem{new T[6*iNumSpline]};
-	T *px = uptrMem.get() + 0*iNumSpline;
-	T *py = uptrMem.get() + 1*iNumSpline;
-	T *pSplineX = uptrMem.get() + 2*iNumSpline;
-	T *pSplineY = uptrMem.get() + 3*iNumSpline;
-	T *pSplineDiff = uptrMem.get() + 4*iNumSpline;
-	T *pSplineDiff2 = uptrMem.get() + 5*iNumSpline;
+	std::unique_ptr<T, std::default_delete<T[]>> uptrMem{
+		new T[2*iLen + 4*iNumSpline]};
+	T *px = uptrMem.get() + 0*iLen;
+	T *py = uptrMem.get() + 1*iLen;
+	T *pSplineX = uptrMem.get() + 2*iLen + 0*iNumSpline;
+	T *pSplineY = uptrMem.get() + 2*iLen + 1*iNumSpline;
+	T *pSplineDiff = uptrMem.get() + 2*iLen + 2*iNumSpline;
+	T *pSplineDiff2 = uptrMem.get() + 2*iLen + 3*iNumSpline;
 
 
 	// sort input values
