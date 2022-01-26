@@ -157,7 +157,7 @@ unsigned int lerprgb(unsigned char r1, unsigned char g1, unsigned char b1,
 	unsigned char g = lerp(g1, g2, dval);
 	unsigned char b = lerp(b1, b2, dval);
 
-	return (0xff<<24) | (r<<16) | (g<<8) | (b);
+	return (unsigned(0xff)<<24) | (r<<16) | (g<<8) | (b);
 }
 
 
@@ -177,7 +177,7 @@ unsigned int lerprgb(unsigned int col1, unsigned int col2, T dval)
 	unsigned char g = lerp(g1, g2, dval);
 	unsigned char b = lerp(b1, b2, dval);
 
-	return (0xff<<24) | (r<<16) | (g<<8) | (b);
+	return (unsigned(0xff)<<24) | (r<<16) | (g<<8) | (b);
 }
 // -----------------------------------------------------------------------------
 
