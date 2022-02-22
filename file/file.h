@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <memory>
 #include <type_traits>
 
 
