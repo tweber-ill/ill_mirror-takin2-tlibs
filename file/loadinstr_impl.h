@@ -1099,11 +1099,18 @@ void FileFrm<t_real>::ReadHeader(std::istream& istr)
 			// try to find instrument name
 			if(m_strInstrIdent == "")
 			{
-				const std::string strRegex = R"REX(([a-z0-9]+)\_responsible)REX";
-				rex::regex rx(strRegex, rex::regex::ECMAScript|rex::regex_constants::icase);
-				rex::smatch m;
-				if(rex::regex_search(pairLine.first, m, rx) && m.size()>=2)
-					m_strInstrIdent = m[1];
+				try
+				{
+					const std::string strRegex = R"REX(([a-z0-9]+)_responsible)REX";
+					rex::regex rx(strRegex, rex::regex::ECMAScript|rex::regex_constants::icase);
+					rex::smatch m;
+					if(rex::regex_search(pairLine.first, m, rx) && m.size()>=2)
+						m_strInstrIdent = m[1];
+				}
+				catch(const std::exception& ex)
+				{
+					log_warn(ex.what());
+				}
 			}
 		}
 	}
