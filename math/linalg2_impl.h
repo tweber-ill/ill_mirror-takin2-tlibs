@@ -58,10 +58,10 @@ struct select_func
 	select_func(F1* f1, F2* f2) : m_f1(f1), m_f2(f2) {}
 
 	template<class T>
-	typename std::enable_if<std::is_same<T, T1>::value, F1*>::type 
+	typename std::enable_if<std::is_same<T, T1>::value, F1*>::type
 		get_func() { return m_f1; }
 	template<class T>
-	typename std::enable_if<std::is_same<T, T2>::value, F2*>::type 
+	typename std::enable_if<std::is_same<T, T2>::value, F2*>::type
 		get_func() { return m_f2; }
 };
 
@@ -240,7 +240,7 @@ bool eigenvec_cplx(const ublas::matrix<std::complex<T>>& mat,
 
 	if(iInfo!=0)
 	{
-		log_err("Could not solve general complex eigenproblem", 
+		log_err("Could not solve general complex eigenproblem",
 			" (lapack error ", iInfo , ").");
 		bOk = false;
 	}
@@ -407,7 +407,7 @@ bool eigenvec_herm(const ublas::matrix<std::complex<T>>& mat,
 	using t_cplx = std::complex<T>;
 	bool bOk = true;
 
-	select_func<float, double, decltype(LAPACKE_cheev), decltype(LAPACKE_zheev)> 
+	select_func<float, double, decltype(LAPACKE_cheev), decltype(LAPACKE_zheev)>
 		sfunc(LAPACKE_cheev, LAPACKE_zheev);
 	auto pfunc = sfunc.get_func<T>();
 
