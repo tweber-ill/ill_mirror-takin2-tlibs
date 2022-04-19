@@ -727,6 +727,31 @@ matrix_type submatrix_wnd(const matrix_type& mat, std::size_t iSubRows, std::siz
 }
 
 
+/**
+ * unite two matrices copying matrix 1 in the upper left block and matrix 2 in the lower right
+ */
+template<class matrix_type>
+matrix_type block_matrix(const matrix_type& mat1, const matrix_type& mat2)
+{
+	matrix_type matret(mat1.size1()+mat2.size1(), mat1.size2()+mat2.size2());
+
+	for(std::size_t i=0; i<matret.size1(); ++i)
+	{
+		for(std::size_t j=0; j<matret.size2(); ++j)
+		{
+			if(i>=0 && i<mat1.size1() && j>=0 && j<mat1.size2())
+				matret(i, j) = mat1(i, j);
+			else if(i>=mat1.size1() && j>=mat1.size2())
+				matret(i, j) = mat2(i-mat1.size1(), j-mat1.size2());
+			else
+				matret(i, j) = 0;
+		}
+	}
+
+	return matret;
+}
+
+
 template<class matrix_type>
 matrix_type remove_column(const matrix_type& mat, std::size_t iCol)
 {

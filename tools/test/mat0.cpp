@@ -25,7 +25,7 @@
  * ----------------------------------------------------------------------------
  */
 
-// gcc -I. -o mat0 mat0.cpp -std=c++11 -lstdc++ -lm
+// g++ -I.. -o mat0 mat0.cpp -std=c++11
 
 #include "../math/linalg.h"
 #include <iostream>
@@ -48,6 +48,7 @@ int main()
 	std::cout << "collen: " << veclen(get_column(mat1,0)) << std::endl;
 	std::cout << "inner: " << inner(get_column(mat1,0), get_column(mat1,1)) << std::endl;
 	std::cout << "outer: " << outer(get_column(mat1,0), get_column(mat1,1)) << std::endl;
+	std::cout << "block: " << block_matrix(mat1, mat2) << std::endl;
 
 	double(*sqrt)(double) = std::sqrt;
 	ublas::matrix<double> mat3 = apply_fkt(mat2, std::function<double(double)>(sqrt));
