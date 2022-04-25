@@ -1455,6 +1455,7 @@ bool inverse(const mat_type& mat, mat_type& inv)
 {
 	using T = typename mat_type::value_type;
 	const typename mat_type::size_type N = mat.size1();
+
 	if(N != mat.size2())
 		return false;
 
@@ -1475,6 +1476,36 @@ bool inverse(const mat_type& mat, mat_type& inv)
 			"Matrix to be inverted was: ", mat, ".");
 		return false;
 	}
+
+	return true;
+}
+
+
+/**
+ * calculates the matrix inverse of a diagonal matrix
+ */
+template<class mat_type = ublas::matrix<double>>
+bool inverse_diag(const mat_type& mat, mat_type& inv)
+{
+	using T = typename mat_type::value_type;
+	const typename mat_type::size_type N = mat.size1();
+
+	if(N != mat.size2())
+		return false;
+
+	try
+	{
+		inv = zero_m<mat_type>(N, N);
+		for(std::size_t i=0; i<N; ++i)
+			inv(i, i) = T(1) / mat(i, i);
+	}
+	catch(const std::exception& ex)
+	{
+		log_err("Diagonal matrix inversion failed with exception: ", ex.what(), ".", "\n",
+			"Matrix to be inverted was: ", mat, ".");
+		return false;
+	}
+
 	return true;
 }
 
