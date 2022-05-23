@@ -168,6 +168,7 @@ void Log::end_log()
 			(*pOstr) << get_color(LogColor::NONE);
 		(*pOstr) << std::endl;
 	}
+
 	s_mtx.unlock();
 }
 
@@ -205,7 +206,8 @@ Log::Log(const std::string& strInfo, LogColor col, std::ostream* pOstr)
 Log::~Log()
 {
 	std::lock_guard<decltype(s_mtx)> _lck(s_mtx);
-	//std::cerr << "Removing " << m_strInfo << " logger." << std::endl;
+	//std::cerr << "Removing " << m_strInfo << " logger for thread " << std::hex << std::this_thread::get_id() << std::endl;
+	//std::cout << boost::stacktrace::stacktrace{} << std::endl;
 
 	m_mapOstrsTh.clear();
 	m_vecOstrs.clear();
@@ -214,8 +216,6 @@ Log::~Log()
 
 std::vector<Log::t_pairOstr>& Log::GetThreadOstrs()
 {
-	static const std::vector<Log::t_pairOstr> empty;
-
 	t_mapthreadOstrs::iterator iter = m_mapOstrsTh.find(std::this_thread::get_id());
 	if(iter == m_mapOstrsTh.end())
 		iter = m_mapOstrsTh.insert({std::this_thread::get_id(), std::vector<t_pairOstr>()}).first;
@@ -262,6 +262,7 @@ void Log::RemoveOstr(std::ostream* pOstr)
 }
 
 
+// use -fvisibility=hidden to avoid multiple calls to the destructors in loaded external libraries
 Log log_info("INFO", LogColor::WHITE, &std::cerr),
 	log_warn("WARNING", LogColor::YELLOW, &std::cerr),
 	log_err("ERROR", LogColor::RED, &std::cerr),
