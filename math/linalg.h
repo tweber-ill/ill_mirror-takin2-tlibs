@@ -1246,7 +1246,7 @@ bool is_centering_matrix(const t_mat& mat)
 
 	// translation?
 	if(has_translation_components<t_mat>(mat))
-			return true;
+		return true;
 	return false;
 }
 
