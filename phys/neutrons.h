@@ -953,8 +953,9 @@ t_length<Sys, Y> focal_len(const t_length<Sys, Y>& lenBefore, const t_length<Sys
 /**
  * optimal mono/ana curvature,
  * @see e.g. (Shirane 2002) p. 66
- * @see e.g. nicos/nicos-core.git/tree/nicos/devices/tas/mono.py in nicos
  * @see e.g. McStas: https://github.com/McStasMcXtrace/McCode/blob/master/mcstas-comps/optics/Monochromator_curved.comp
+ * @see e.g. Nicos: https://forge.frm2.tum.de/cgit/cgit.cgi/frm2/nicos/nicos.git/tree/nicos/devices/tas/mono.py
+ * @see e.g. [eck14], equs. 59-61
  */
 template<class Sys, class Y=double>
 t_length<Sys, Y> foc_curv(const t_length<Sys, Y>& lenBefore, const t_length<Sys, Y>& lenAfter,
