@@ -337,7 +337,7 @@ const std::vector<std::array<t_real, 6>>& FileInstrBase<t_real>::GetPolStates() 
 
 
 template<class t_real>
-void FilePsi<t_real>::ReadData(std::istream& istr)
+std::string FilePsi<t_real>::ReadData(std::istream& istr)
 {
 	std::size_t iLine = 0;
 
@@ -346,6 +346,7 @@ void FilePsi<t_real>::ReadData(std::istream& istr)
 	std::getline(istr, strHdr);
 	tl::trim(strHdr);
 	++iLine;
+
 	get_tokens<std::string, std::string, t_vecColNames>(strHdr, " \t", m_vecColNames);
 	for(std::string& _str : m_vecColNames)
 	{
@@ -360,18 +361,26 @@ void FilePsi<t_real>::ReadData(std::istream& istr)
 	// data
 	while(!istr.eof())
 	{
-		std::string strLine;
-		std::getline(istr, strLine);
-		++iLine;
-		tl::trim(strLine);
+		// seekg/tellg doesn't work with compressed iostreams, return line instead!
+		//std::streampos pos = istr.tellg();
+		std::string line;
+		std::getline(istr, line);
 
-		if(strLine.length() == 0)
-			continue;
-		if(strLine[0] == '#')
+		// begin of another section (and end of data section)?
+		if(line.find(':') != std::string::npos)
+		{
+			//istr.seekg(pos);
+			return line;
+		}
+
+		tl::trim(line);
+		++iLine;
+
+		if(line.length() == 0 || line[0] == '#')
 			continue;
 
 		std::vector<t_real> vecToks;
-		get_tokens<t_real, std::string>(strLine, " \t", vecToks);
+		get_tokens<t_real, std::string>(line, " \t", vecToks);
 
 		if(vecToks.size() != m_vecColNames.size())
 		{
@@ -386,6 +395,34 @@ void FilePsi<t_real>::ReadData(std::istream& istr)
 		for(std::size_t iTok=0; iTok<vecToks.size(); ++iTok)
 			m_vecData[iTok].push_back(vecToks[iTok]);
 	}
+
+	// no leftover line
+	return "";
+}
+
+
+template<class t_real>
+std::string FilePsi<t_real>::ReadMultiData(std::istream& istr)
+{
+	// skip over multi-analyser data for the moment
+
+	while(!istr.eof())
+	{
+		// seekg/tellg doesn't work with compressed iostreams, return line instead!
+		//std::streampos pos = istr.tellg();
+		std::string line;
+		std::getline(istr, line);
+
+		// begin of another section (and end of data section)?
+		if(line.find(':') != std::string::npos)
+		{
+			//istr.seekg(pos);
+			return line;
+		}
+	}
+
+	// no leftover line
+	return "";
 }
 
 
@@ -622,18 +659,32 @@ bool FilePsi<t_real>::Load(const char* pcFile)
 	std::istream* pIstr = &ifstr;
 #endif
 
+	std::string nextLine;
 	while(!pIstr->eof())
 	{
 		std::string strLine;
-		std::getline(*pIstr, strLine);
+
+		// see if a line is left over from the previous loop
+		if(nextLine == "")
+		{
+			// read a new line
+			std::getline(*pIstr, strLine);
+		}
+		else
+		{
+			strLine = nextLine;
+			nextLine = "";
+		}
 
 		if(strLine.substr(0,4) == "RRRR")
 			skip_after_line<char>(*pIstr, "VVVV", true);
 
 		std::pair<std::string, std::string> pairLine =
-				split_first<std::string>(strLine, ":", 1);
+			split_first<std::string>(strLine, ":", 1);
 		if(pairLine.first == "DATA_")
-			ReadData(*pIstr);
+			nextLine = ReadData(*pIstr);
+		else if(pairLine.first == "MULTI")
+			nextLine = ReadMultiData(*pIstr);
 		else if(pairLine.first == "")
 			continue;
 		else

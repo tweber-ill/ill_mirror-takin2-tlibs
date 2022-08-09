@@ -155,7 +155,8 @@ class FilePsi : public FileInstrBase<_t_real>
 
 
 	protected:
-		void ReadData(std::istream& istr);
+		std::string ReadData(std::istream& istr);
+		std::string ReadMultiData(std::istream& istr);
 		void GetInternalParams(const std::string& strAll, t_mapIParams& mapPara);
 
 	public:
