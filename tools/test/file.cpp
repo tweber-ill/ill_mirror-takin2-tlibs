@@ -31,8 +31,8 @@ int main()
 {
 	std::vector<std::string> vecPaths =
 	{
-		"/usr/include/", 
-		"/usr/local/include/", 
+		"/usr/include/",
+		"/usr/local/include/",
 	};
 
 

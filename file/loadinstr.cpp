@@ -38,6 +38,7 @@ namespace tl
 	template class FileMacs<double>;
 	template class FileTrisp<double>;
 	template class FileRaw<double>;
+	template class FileH5<double>;
 
 
 	template FileInstrBase<float>* FileInstrBase<float>::LoadInstr(const char* pcFile);
@@ -47,4 +48,5 @@ namespace tl
 	template class FileMacs<float>;
 	template class FileTrisp<float>;
 	template class FileRaw<float>;
+	template class FileH5<float>;
 }
