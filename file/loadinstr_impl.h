@@ -916,11 +916,13 @@ bool FilePsi<t_real>::MergeWith(const FileInstrBase<t_real>* pDat)
 	return true;
 }
 
-// TODO
 template<class t_real>
 bool FilePsi<t_real>::IsKiFixed() const
 {
-	return 0;
+	typename t_mapIParams::const_iterator iter = m_mapParameters.find("FX");
+	t_real val = (iter!=m_mapParameters.end() ? iter->second : 2.);
+
+	return float_equal<t_real>(val, 1., 0.25);
 }
 
 template<class t_real>
@@ -936,7 +938,6 @@ std::array<t_real, 5> FilePsi<t_real>::GetScanHKLKiKf(std::size_t i) const
 {
 	return FileInstrBase<t_real>::GetScanHKLKiKf("QH", "QK", "QL", "EN", i);
 }
-
 
 template<class t_real>
 std::string FilePsi<t_real>::GetTitle() const
@@ -1434,8 +1435,8 @@ bool FileFrm<t_real>::IsKiFixed() const
 	}
 
 	if(strScanMode == "cki")
-		return 1;
-	return 0;
+		return true;
+	return false;
 }
 
 template<class t_real>
@@ -2352,7 +2353,7 @@ t_real FileTrisp<t_real>::GetKFix() const
 template<class t_real>
 bool FileTrisp<t_real>::IsKiFixed() const
 {
-	return 0;		// assume ckf
+	return false;		// assume ckf
 }
 
 template<class t_real>
@@ -2825,6 +2826,8 @@ bool FileH5<t_real>::Load(const char* pcFile)
 
 		m_data.clear();
 		m_vecCols.clear();
+		m_params.clear();
+		m_scanned_vars.clear();
 
 		std::vector<std::string> entries;
 		if(!get_h5_entries(h5file, "/", entries) || entries.size() == 0)
@@ -2852,14 +2855,75 @@ bool FileH5<t_real>::Load(const char* pcFile)
 			return false;
 		}
 
+		// get scanned variables
+		std::vector<int> scanned;
+		if(!tl::get_h5_vector(h5file, entry + "/data_scan/scanned_variables/variables_names/scanned", scanned))
+		{
+			tl::log_err("Cannot load scanned variables.");
+			return false;
+		}
+
+		for(std::size_t idx = 0; idx<std::min(m_vecCols.size(), scanned.size()); ++idx)
+		{
+			if(scanned[idx])
+				m_scanned_vars.push_back(m_vecCols[idx]);
+		}
+
+		// if Q, E coordinates are among the scan variables, move them to the front
+		auto iterQL = std::find(m_scanned_vars.begin(), m_scanned_vars.end(), "QL");
+		if(iterQL != m_scanned_vars.end())
+		{
+			m_scanned_vars.erase(iterQL);
+			m_scanned_vars.insert(m_scanned_vars.begin(), "QL");
+		}
+		auto iterQK = std::find(m_scanned_vars.begin(), m_scanned_vars.end(), "QK");
+		if(iterQK != m_scanned_vars.end())
+		{
+			m_scanned_vars.erase(iterQK);
+			m_scanned_vars.insert(m_scanned_vars.begin(), "QK");
+		}
+		auto iterQH = std::find(m_scanned_vars.begin(), m_scanned_vars.end(), "QH");
+		if(iterQH != m_scanned_vars.end())
+		{
+			m_scanned_vars.erase(iterQH);
+			m_scanned_vars.insert(m_scanned_vars.begin(), "QH");
+		}
+		auto iterEN = std::find(m_scanned_vars.begin(), m_scanned_vars.end(), "EN");
+		if(iterEN != m_scanned_vars.end())
+		{
+			m_scanned_vars.erase(iterEN);
+			m_scanned_vars.insert(m_scanned_vars.begin(), "EN");
+		}
+
 		// get experiment infos
 		tl::get_h5_string(h5file, entry + "/title", m_title);
 		tl::get_h5_string(h5file, entry + "/start_time", m_timestamp);
 		tl::get_h5_scalar(h5file, entry + "/run_number", m_scannumber);
+		tl::get_h5_string(h5file, entry + "/instrument/command_line/actual_command", m_scancommand);
 
 		// get user infos
 		tl::get_h5_string(h5file, entry + "/user/name", m_username);
 		tl::get_h5_string(h5file, entry + "/user/namelocalcontact", m_localname);
+
+		// get instrument infos
+		t_real mono_sense = -1., ana_sense = -1., sample_sense = 1.;
+		t_real ki = 0., kf = 0.;
+
+		tl::get_h5_scalar(h5file, entry + "/instrument/Monochromator/d_spacing", m_dspacings[0]);
+		tl::get_h5_scalar(h5file, entry + "/instrument/Monochromator/sens", mono_sense);
+		tl::get_h5_scalar(h5file, entry + "/instrument/Monochromator/ki", ki);
+		tl::get_h5_scalar(h5file, entry + "/instrument/Analyser/d_spacing", m_dspacings[1]);
+		tl::get_h5_scalar(h5file, entry + "/instrument/Analyser/sens", ana_sense);
+		tl::get_h5_scalar(h5file, entry + "/instrument/Analyser/kf", kf);
+		tl::get_h5_scalar(h5file, entry + "/sample/sens", sample_sense);
+
+		m_senses[0] = mono_sense > 0.;
+		m_senses[1] = sample_sense > 0.;
+		m_senses[2] = ana_sense > 0.;
+
+		// TODO
+		m_kfix = kf;
+		m_iskifixed = false;
 
 		// get sample infos
 		tl::get_h5_scalar(h5file, entry + "/sample/unit_cell_a", m_lattice[0]);
@@ -2869,10 +2933,6 @@ bool FileH5<t_real>::Load(const char* pcFile)
 		tl::get_h5_scalar(h5file, entry + "/sample/unit_cell_alpha", m_angles[0]);
 		tl::get_h5_scalar(h5file, entry + "/sample/unit_cell_beta", m_angles[1]);
 		tl::get_h5_scalar(h5file, entry + "/sample/unit_cell_gamma", m_angles[2]);
-
-		m_angles[0] = tl::d2r(m_angles[0]);
-		m_angles[1] = tl::d2r(m_angles[1]);
-		m_angles[2] = tl::d2r(m_angles[2]);
 
 		tl::get_h5_scalar(h5file, entry + "/sample/ax", m_plane[0][0]);
 		tl::get_h5_scalar(h5file, entry + "/sample/ay", m_plane[0][1]);
@@ -2886,6 +2946,10 @@ bool FileH5<t_real>::Load(const char* pcFile)
 		tl::get_h5_scalar(h5file, entry + "/sample/qk", m_initialpos[1]);
 		tl::get_h5_scalar(h5file, entry + "/sample/ql", m_initialpos[2]);
 		tl::get_h5_scalar(h5file, entry + "/sample/en", m_initialpos[3]);
+
+		m_angles[0] = tl::d2r(m_angles[0]);
+		m_angles[1] = tl::d2r(m_angles[1]);
+		m_angles[2] = tl::d2r(m_angles[2]);
 
 		h5file.close();
 	}
@@ -2972,48 +3036,13 @@ std::array<t_real,3> FileH5<t_real>::GetSampleAngles() const
 template<class t_real>
 std::array<t_real,2> FileH5<t_real>::GetMonoAnaD() const
 {
-	using t_map = typename FileInstrBase<t_real>::t_mapParams;
-	const t_map& params = GetAllParams();
-	t_real m{0}, a{0};
-
-	{
-		typename t_map::const_iterator iter = params.find("mono_d");
-		if(iter != params.end())
-			m = tl::str_to_var<t_real>(iter->second);
-	}
-	{
-		typename t_map::const_iterator iter = params.find("ana_d");
-		if(iter != params.end())
-			a = tl::str_to_var<t_real>(iter->second);
-	}
-
-	return std::array<t_real,2>{{m, a}};
+	return m_dspacings;
 }
 
 template<class t_real>
 std::array<bool, 3> FileH5<t_real>::GetScatterSenses() const
 {
-	using t_map = typename FileInstrBase<t_real>::t_mapParams;
-	const t_map& params = GetAllParams();
-	t_real m{0}, s{1}, a{0};
-
-	{
-		typename t_map::const_iterator iter = params.find("sense_m");
-		if(iter != params.end())
-			m = tl::str_to_var<t_real>(iter->second);
-	}
-	{
-		typename t_map::const_iterator iter = params.find("sense_s");
-		if(iter != params.end())
-			s = tl::str_to_var<t_real>(iter->second);
-	}
-	{
-		typename t_map::const_iterator iter = params.find("sense_a");
-		if(iter != params.end())
-			a = tl::str_to_var<t_real>(iter->second);
-	}
-
-	return std::array<bool,3>{{m>0., s>0., a>0.}};
+	return m_senses;
 }
 
 template<class t_real>
@@ -3037,29 +3066,13 @@ std::array<t_real, 4> FileH5<t_real>::GetPosHKLE() const
 template<class t_real>
 t_real FileH5<t_real>::GetKFix() const
 {
-	using t_map = typename FileInstrBase<t_real>::t_mapParams;
-	const t_map& params = GetAllParams();
-	t_real k{0};
-
-	typename t_map::const_iterator iter = params.find("k_fix");
-	if(iter != params.end())
-		k = tl::str_to_var<t_real>(iter->second);
-
-	return k;
+	return m_kfix;
 }
 
 template<class t_real>
 bool FileH5<t_real>::IsKiFixed() const
 {
-	using t_map = typename FileInstrBase<t_real>::t_mapParams;
-	const t_map& params = GetAllParams();
-	bool b{0};
-
-	typename t_map::const_iterator iter = params.find("is_ki_fixed");
-	if(iter != params.end())
-		b = (tl::str_to_var<int>(iter->second) != 0);
-
-	return b;
+	return m_iskifixed;
 }
 
 template<class t_real>
@@ -3076,56 +3089,12 @@ std::array<t_real, 5> FileH5<t_real>::GetScanHKLKiKf(std::size_t i) const
 	using t_map = typename FileInstrBase<t_real>::t_mapParams;
 	const t_map& params = GetAllParams();
 
-	std::string strColH = "QH";
-	std::string strColK = "QK";
-	std::string strColL = "QL";
-	std::string strColE = "EN";
-
-	{
-		typename t_map::const_iterator iter = params.find("col_h");
-		if(iter != params.end())
-			strColH = iter->second;
-	}
-	{
-		typename t_map::const_iterator iter = params.find("col_k");
-		if(iter != params.end())
-			strColK = iter->second;
-	}
-	{
-		typename t_map::const_iterator iter = params.find("col_l");
-		if(iter != params.end())
-			strColL = iter->second;
-	}
-	{
-		typename t_map::const_iterator iter = params.find("col_E");
-		if(iter != params.end())
-			strColE = iter->second;
-	}
-
-	return FileInstrBase<t_real>::GetScanHKLKiKf(strColH.c_str(), strColK.c_str(), strColL.c_str(), strColE.c_str(), i);
+	return FileInstrBase<t_real>::GetScanHKLKiKf("QH", "QK", "QL", "EN", i);
 }
 
 template<class t_real> std::vector<std::string> FileH5<t_real>::GetScannedVars() const
 {
-	using t_map = typename FileInstrBase<t_real>::t_mapParams;
-	const t_map& params = GetAllParams();
-
-	std::string strColVars;
-
-	{
-		typename t_map::const_iterator iter = params.find("cols_scanned");
-		if(iter != params.end())
-			strColVars = iter->second;
-	}
-
-	std::vector<std::string> vecVars;
-	tl::get_tokens<std::string, std::string>(strColVars, ",;", vecVars);
-
-	// if nothing is given, default to E
-	if(!vecVars.size())
-		vecVars.push_back("EN");
-
-	return vecVars;
+	return m_scanned_vars;
 }
 
 template<class t_real>
@@ -3142,7 +3111,7 @@ template<class t_real> std::string FileH5<t_real>::GetLocalContact() const { ret
 template<class t_real> std::string FileH5<t_real>::GetScanNumber() const { return tl::var_to_str(m_scannumber); }
 template<class t_real> std::string FileH5<t_real>::GetSampleName() const { return ""; }
 template<class t_real> std::string FileH5<t_real>::GetSpacegroup() const { return ""; }
-template<class t_real> std::string FileH5<t_real>::GetScanCommand() const { return ""; }
+template<class t_real> std::string FileH5<t_real>::GetScanCommand() const { return m_scancommand; }
 template<class t_real> std::string FileH5<t_real>::GetTimestamp() const { return m_timestamp; }
 
 }

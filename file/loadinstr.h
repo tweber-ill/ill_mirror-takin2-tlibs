@@ -523,14 +523,22 @@ public:
 protected:
 	t_vecDat m_data;
 	t_vecColNames m_vecCols;
-
 	t_mapParams m_params;
 
 	std::string m_title, m_username, m_localname, m_timestamp;
 	int m_scannumber = 0;
+	std::string m_scancommand;
 
 	std::array<t_real, 3> m_lattice, m_angles, m_plane[2];
 	std::array<t_real, 4> m_initialpos;
+
+	std::array<t_real, 2> m_dspacings;
+	std::array<bool, 3> m_senses;
+
+	t_real m_kfix = 0.;
+	bool m_iskifixed = false;
+
+	std::vector<std::string> m_scanned_vars;
 
 public:
 	FileH5() = default;
