@@ -2822,7 +2822,8 @@ bool FileH5<t_real>::Load(const char* pcFile)
 {
 	try
 	{
-		H5::H5File h5file = H5::H5File("/users/tw/Downloads/mail_tmp/065006.nxs", H5F_ACC_RDONLY);
+		std::cout << pcFile << std::endl;
+		H5::H5File h5file = H5::H5File(pcFile, H5F_ACC_RDONLY);
 
 		m_data.clear();
 		m_vecCols.clear();
@@ -2849,10 +2850,27 @@ bool FileH5<t_real>::Load(const char* pcFile)
 		}
 
 		// get column names
-		if(!tl::get_h5_string_vector(h5file, entry + "/data_scan/scanned_variables/variables_names/property", m_vecCols))
+		if(!tl::get_h5_string_vector(h5file, entry + "/data_scan/scanned_variables/variables_names/label", m_vecCols))
 		{
 			tl::log_err("Cannot load column names.");
 			return false;
+
+			/*std::vector<int> axes;
+			std::vector<std::string> names, props;
+
+			bool ok1 = tl::get_h5_vector(h5file, entry + "/data_scan/scanned_variables/variables_names/name", axes);
+			bool ok2 = tl::get_h5_string_vector(h5file, entry + "/data_scan/scanned_variables/variables_names/name", names);
+			bool ok3 = tl::get_h5_string_vector(h5file, entry + "/data_scan/scanned_variables/variables_names/property", props);
+
+			if(!ok1 || !ok2 || !ok3)
+			{
+				tl::log_err("Cannot load column names in old format.");
+				return false;
+			}
+
+			m_vecCols.resize(axes.size());
+			for(std::size_t col=0; col<axes.size(); ++col)
+				m_vecCols[col] = axes[col] ? names[col] : props[col];*/
 		}
 
 		// get scanned variables
@@ -3103,7 +3121,7 @@ bool FileH5<t_real>::MergeWith(const FileInstrBase<t_real>* pDat)
 	return FileInstrBase<t_real>::MergeWith(pDat);
 }
 
-template<class t_real> std::string FileH5<t_real>::GetCountVar() const { return "TotalCount"; }
+template<class t_real> std::string FileH5<t_real>::GetCountVar() const { return "Detector"; }
 template<class t_real> std::string FileH5<t_real>::GetMonVar() const { return "Monitor1"; }
 template<class t_real> std::string FileH5<t_real>::GetTitle() const { return m_title; }
 template<class t_real> std::string FileH5<t_real>::GetUser() const { return m_username; }
