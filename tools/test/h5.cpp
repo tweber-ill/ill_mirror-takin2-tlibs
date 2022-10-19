@@ -35,6 +35,15 @@
 int main()
 {
 	H5::H5File h5file("/users/tw/Downloads/mail_tmp/065006.nxs", H5F_ACC_RDONLY);
+
+	std::vector<std::string> entries;
+	tl::get_h5_entries(h5file, "/", entries);
+	for(const std::string& entry : entries)
+		std::cout << entry << " ";
+	std::cout << std::endl;
+
+	std::cout << std::endl;
+
 	int steps = 0;
 	bool ok = tl::get_h5_scalar(h5file, "entry0/data_scan/total_steps", steps);
 	std::cout << std::boolalpha << ok << std::endl;

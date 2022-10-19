@@ -2826,36 +2826,73 @@ bool FileH5<t_real>::Load(const char* pcFile)
 		m_data.clear();
 		m_vecCols.clear();
 
-		t_vecDat dat;
-		if(!tl::get_h5_matrix(h5file, "entry0/data_scan/scanned_variables/data", dat))
+		std::vector<std::string> entries;
+		if(!get_h5_entries(h5file, "/", entries) || entries.size() == 0)
+		{
+			tl::log_err("No entries in hdf5 file.");
+			return false;
+		}
+
+		if(entries.size() > 1)
+			tl::log_warn(entries.size(), " root entries in hdf5 file, expected a single one.");
+
+		const std::string& entry = entries[0];
+
+		// get data matrix
+		if(!tl::get_h5_matrix(h5file, entry + "/data_scan/scanned_variables/data", m_data))
 		{
 			tl::log_err("Cannot load count data.");
 			return false;
 		}
 
-		std::size_t num_pts = dat.size();
-		std::size_t num_cols = num_pts > 0 ? dat[0].size() : 0;
-
-		m_data.reserve(num_cols);
-
-		for(std::size_t col_idx=0; col_idx<num_cols; ++col_idx)
-		{
-			t_vecVals elems;
-			elems.reserve(num_pts);
-
-			for(std::size_t pt_idx=0; pt_idx<num_pts; ++pt_idx)
-				elems.push_back(dat[pt_idx][col_idx]);
-
-			m_data.emplace_back(std::move(elems));
-		}
-
-		if(!tl::get_h5_string_vector(h5file, "entry0/data_scan/scanned_variables/variables_names/property", m_vecCols))
+		// get column names
+		if(!tl::get_h5_string_vector(h5file, entry + "/data_scan/scanned_variables/variables_names/property", m_vecCols))
 		{
 			tl::log_err("Cannot load column names.");
 			return false;
 		}
 
+		// get experiment infos
+		tl::get_h5_string(h5file, entry + "/title", m_title);
+		tl::get_h5_string(h5file, entry + "/start_time", m_timestamp);
+		tl::get_h5_scalar(h5file, entry + "/run_number", m_scannumber);
+
+		// get user infos
+		tl::get_h5_string(h5file, entry + "/user/name", m_username);
+		tl::get_h5_string(h5file, entry + "/user/namelocalcontact", m_localname);
+
+		// get sample infos
+		tl::get_h5_scalar(h5file, entry + "/sample/unit_cell_a", m_lattice[0]);
+		tl::get_h5_scalar(h5file, entry + "/sample/unit_cell_b", m_lattice[1]);
+		tl::get_h5_scalar(h5file, entry + "/sample/unit_cell_c", m_lattice[2]);
+
+		tl::get_h5_scalar(h5file, entry + "/sample/unit_cell_alpha", m_angles[0]);
+		tl::get_h5_scalar(h5file, entry + "/sample/unit_cell_beta", m_angles[1]);
+		tl::get_h5_scalar(h5file, entry + "/sample/unit_cell_gamma", m_angles[2]);
+
+		m_angles[0] = tl::d2r(m_angles[0]);
+		m_angles[1] = tl::d2r(m_angles[1]);
+		m_angles[2] = tl::d2r(m_angles[2]);
+
+		tl::get_h5_scalar(h5file, entry + "/sample/ax", m_plane[0][0]);
+		tl::get_h5_scalar(h5file, entry + "/sample/ay", m_plane[0][1]);
+		tl::get_h5_scalar(h5file, entry + "/sample/az", m_plane[0][2]);
+
+		tl::get_h5_scalar(h5file, entry + "/sample/bx", m_plane[1][0]);
+		tl::get_h5_scalar(h5file, entry + "/sample/by", m_plane[1][1]);
+		tl::get_h5_scalar(h5file, entry + "/sample/bz", m_plane[1][2]);
+
+		tl::get_h5_scalar(h5file, entry + "/sample/qh", m_initialpos[0]);
+		tl::get_h5_scalar(h5file, entry + "/sample/qk", m_initialpos[1]);
+		tl::get_h5_scalar(h5file, entry + "/sample/ql", m_initialpos[2]);
+		tl::get_h5_scalar(h5file, entry + "/sample/en", m_initialpos[3]);
+
 		h5file.close();
+	}
+	catch(const H5::Exception& ex)
+	{
+		tl::log_err(ex.getDetailMsg());
+		return false;
 	}
 	catch(const std::exception& ex)
 	{
@@ -2923,53 +2960,13 @@ FileH5<t_real>::GetAllParams() const
 template<class t_real>
 std::array<t_real,3> FileH5<t_real>::GetSampleLattice() const
 {
-	using t_map = typename FileInstrBase<t_real>::t_mapParams;
-	const t_map& params = GetAllParams();
-	t_real a{0}, b{0}, c{0};
-
-	{
-		typename t_map::const_iterator iter = params.find("sample_a");
-		if(iter != params.end())
-			a = tl::str_to_var<t_real>(iter->second);
-	}
-	{
-		typename t_map::const_iterator iter = params.find("sample_b");
-		if(iter != params.end())
-			b = tl::str_to_var<t_real>(iter->second);
-	}
-	{
-		typename t_map::const_iterator iter = params.find("sample_c");
-		if(iter != params.end())
-			c = tl::str_to_var<t_real>(iter->second);
-	}
-
-	return std::array<t_real,3>{{a, b, c}};
+	return m_lattice;
 }
 
 template<class t_real>
 std::array<t_real,3> FileH5<t_real>::GetSampleAngles() const
 {
-	using t_map = typename FileInstrBase<t_real>::t_mapParams;
-	const t_map& params = GetAllParams();
-	t_real a{0}, b{0}, c{0};
-
-	{
-		typename t_map::const_iterator iter = params.find("sample_alpha");
-		if(iter != params.end())
-			a = tl::d2r(tl::str_to_var<t_real>(iter->second));
-	}
-	{
-		typename t_map::const_iterator iter = params.find("sample_beta");
-		if(iter != params.end())
-			b = tl::d2r(tl::str_to_var<t_real>(iter->second));
-	}
-	{
-		typename t_map::const_iterator iter = params.find("sample_gamma");
-		if(iter != params.end())
-			c = tl::d2r(tl::str_to_var<t_real>(iter->second));
-	}
-
-	return std::array<t_real,3>{{a, b, c}};
+	return m_angles;
 }
 
 template<class t_real>
@@ -3022,63 +3019,20 @@ std::array<bool, 3> FileH5<t_real>::GetScatterSenses() const
 template<class t_real>
 std::array<t_real, 3> FileH5<t_real>::GetScatterPlane0() const
 {
-	using t_map = typename FileInstrBase<t_real>::t_mapParams;
-	const t_map& params = GetAllParams();
-	t_real x{0}, y{0}, z{0};
-
-	{
-		typename t_map::const_iterator iter = params.find("orient1_x");
-		if(iter != params.end())
-			x = tl::str_to_var<t_real>(iter->second);
-	}
-	{
-		typename t_map::const_iterator iter = params.find("orient1_y");
-		if(iter != params.end())
-			y = tl::str_to_var<t_real>(iter->second);
-	}
-	{
-		typename t_map::const_iterator iter = params.find("orient1_z");
-		if(iter != params.end())
-			z = tl::str_to_var<t_real>(iter->second);
-	}
-
-	return std::array<t_real,3>{{x, y, z}};
+	return m_plane[0];
 }
 
 template<class t_real>
 std::array<t_real, 3> FileH5<t_real>::GetScatterPlane1() const
 {
-	using t_map = typename FileInstrBase<t_real>::t_mapParams;
-	const t_map& params = GetAllParams();
-	t_real x{0}, y{0}, z{0};
-
-	{
-		typename t_map::const_iterator iter = params.find("orient2_x");
-		if(iter != params.end())
-			x = tl::str_to_var<t_real>(iter->second);
-	}
-	{
-		typename t_map::const_iterator iter = params.find("orient2_y");
-		if(iter != params.end())
-			y = tl::str_to_var<t_real>(iter->second);
-	}
-	{
-		typename t_map::const_iterator iter = params.find("orient2_z");
-		if(iter != params.end())
-			z = tl::str_to_var<t_real>(iter->second);
-	}
-
-	return std::array<t_real,3>{{x, y, z}};
+	return m_plane[1];
 }
-
 
 template<class t_real>
 std::array<t_real, 4> FileH5<t_real>::GetPosHKLE() const
 {
-	// TODO: implement
-	return std::array<t_real,4>{{0,0,0,0}};
+	return m_initialpos;
 }
-
 
 template<class t_real>
 t_real FileH5<t_real>::GetKFix() const
@@ -3174,53 +3128,22 @@ template<class t_real> std::vector<std::string> FileH5<t_real>::GetScannedVars()
 	return vecVars;
 }
 
-template<class t_real> std::string FileH5<t_real>::GetCountVar() const
-{
-	using t_map = typename FileInstrBase<t_real>::t_mapParams;
-	const t_map& params = GetAllParams();
-
-	std::string strColCtr = "5";
-
-	{
-		typename t_map::const_iterator iter = params.find("col_ctr");
-		if(iter != params.end())
-			strColCtr = iter->second;
-	}
-
-	return strColCtr;
-}
-
-template<class t_real> std::string FileH5<t_real>::GetMonVar() const
-{
-	using t_map = typename FileInstrBase<t_real>::t_mapParams;
-	const t_map& params = GetAllParams();
-
-	std::string strColCtr = "6";
-
-	{
-		typename t_map::const_iterator iter = params.find("col_mon");
-		if(iter != params.end())
-			strColCtr = iter->second;
-	}
-
-	return strColCtr;
-}
-
-
 template<class t_real>
 bool FileH5<t_real>::MergeWith(const FileInstrBase<t_real>* pDat)
 {
 	return FileInstrBase<t_real>::MergeWith(pDat);
 }
 
-template<class t_real> std::string FileH5<t_real>::GetTitle() const { return ""; }
-template<class t_real> std::string FileH5<t_real>::GetUser() const { return ""; }
-template<class t_real> std::string FileH5<t_real>::GetLocalContact() const { return ""; }
-template<class t_real> std::string FileH5<t_real>::GetScanNumber() const { return "0"; }
+template<class t_real> std::string FileH5<t_real>::GetCountVar() const { return "TotalCount"; }
+template<class t_real> std::string FileH5<t_real>::GetMonVar() const { return "Monitor1"; }
+template<class t_real> std::string FileH5<t_real>::GetTitle() const { return m_title; }
+template<class t_real> std::string FileH5<t_real>::GetUser() const { return m_username; }
+template<class t_real> std::string FileH5<t_real>::GetLocalContact() const { return m_localname; }
+template<class t_real> std::string FileH5<t_real>::GetScanNumber() const { return tl::var_to_str(m_scannumber); }
 template<class t_real> std::string FileH5<t_real>::GetSampleName() const { return ""; }
 template<class t_real> std::string FileH5<t_real>::GetSpacegroup() const { return ""; }
 template<class t_real> std::string FileH5<t_real>::GetScanCommand() const { return ""; }
-template<class t_real> std::string FileH5<t_real>::GetTimestamp() const { return ""; }
+template<class t_real> std::string FileH5<t_real>::GetTimestamp() const { return m_timestamp; }
 
 }
 

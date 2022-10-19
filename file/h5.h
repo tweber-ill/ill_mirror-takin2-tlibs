@@ -6,6 +6,7 @@
  *
  * References:
  *   @see http://davis.lbl.gov/Manuals/HDF5-1.8.7/cpplus_RM/readdata_8cpp-example.html
+ *   @see http://davis.lbl.gov/Manuals/HDF5-1.8.7/cpplus_RM/classH5_1_1CommonFG.html
  *   @see http://davis.lbl.gov/Manuals/HDF5-1.8.7/cpplus_RM/classH5_1_1DataSet.html
  *   @see http://davis.lbl.gov/Manuals/HDF5-1.8.7/cpplus_RM/classH5_1_1DataSpace.html
  *
@@ -44,6 +45,24 @@
 
 
 namespace tl {
+
+/**
+ * get the entries of a given directory from an hdf5 file
+ */
+template<class t_str = std::string>
+bool get_h5_entries(H5::H5File& file, const std::string& path, std::vector<t_str>& entries)
+{
+	// H5G_iterate_t callback, see: /usr/include/hdf5/serial/H5Dpublic.h
+	H5G_iterate_t collect_elems = [](hid_t group, const char* name, void* _vec) -> herr_t
+	{
+		((std::vector<t_str>*)(_vec))->push_back(name);
+		return 0;
+	};
+
+	file.iterateElems(path, 0, collect_elems, &entries);
+	return true;
+}
+
 
 /**
  * get a scalar value from an hdf5 file

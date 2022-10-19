@@ -523,7 +523,14 @@ public:
 protected:
 	t_vecDat m_data;
 	t_vecColNames m_vecCols;
+
 	t_mapParams m_params;
+
+	std::string m_title, m_username, m_localname, m_timestamp;
+	int m_scannumber = 0;
+
+	std::array<t_real, 3> m_lattice, m_angles, m_plane[2];
+	std::array<t_real, 4> m_initialpos;
 
 public:
 	FileH5() = default;
@@ -540,7 +547,7 @@ public:
 	virtual std::array<t_real, 3> GetScatterPlane0() const override;
 	virtual std::array<t_real, 3> GetScatterPlane1() const override;
 
-	virtual std::array<t_real, 4> GetPosHKLE() const override;	// zero pos.
+	virtual std::array<t_real, 4> GetPosHKLE() const override;
 
 	virtual t_real GetKFix() const override;
 	virtual bool IsKiFixed() const override;
