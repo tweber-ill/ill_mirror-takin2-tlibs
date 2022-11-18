@@ -509,6 +509,7 @@ class FileRaw : public FileInstrBase<_t_real>
 };
 
 
+#ifdef USE_HDF5
 // hdf5 data files
 template<class _t_real = double>
 class FileH5 : public FileInstrBase<_t_real>
@@ -587,6 +588,7 @@ public:
 
 	virtual std::string GetScanCommand() const override;
 };
+#endif
 
 }
 

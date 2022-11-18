@@ -29,6 +29,7 @@
 #include "loadinstr.h"
 #include "loadinstr_impl.h"
 
+
 namespace tl
 {
 	template FileInstrBase<double>* FileInstrBase<double>::LoadInstr(const char* pcFile);
@@ -38,7 +39,9 @@ namespace tl
 	template class FileMacs<double>;
 	template class FileTrisp<double>;
 	template class FileRaw<double>;
+#ifdef USE_HDF5
 	template class FileH5<double>;
+#endif
 
 
 	template FileInstrBase<float>* FileInstrBase<float>::LoadInstr(const char* pcFile);
@@ -48,5 +51,7 @@ namespace tl
 	template class FileMacs<float>;
 	template class FileTrisp<float>;
 	template class FileRaw<float>;
+#ifdef USE_HDF5
 	template class FileH5<float>;
+#endif
 }

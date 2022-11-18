@@ -38,7 +38,10 @@
 #endif
 #include "../math/math.h"
 #include "../phys/neutrons.h"
-#include "../file/h5.h"
+
+#ifdef USE_HDF5
+	#include "../file/h5.h"
+#endif
 
 #ifndef USE_BOOST_REX
 	#include <regex>
@@ -91,7 +94,11 @@ FileInstrBase<t_real>* FileInstrBase<t_real>::LoadInstr(const char* pcFile)
 	// binary hdf5 files
 	if(ext == "nxs" || ext == "hdf")
 	{
+#ifdef USE_HDF5
 		pDat = new FileH5<t_real>();
+#else
+		return nullptr;
+#endif
 	}
 
 	// text files
@@ -2816,6 +2823,7 @@ template<class t_real> std::string FileRaw<t_real>::GetTimestamp() const { retur
 // -----------------------------------------------------------------------------
 
 
+#ifdef USE_HDF5
 
 template<class t_real>
 bool FileH5<t_real>::Load(const char* pcFile)
@@ -3131,6 +3139,9 @@ template<class t_real> std::string FileH5<t_real>::GetSampleName() const { retur
 template<class t_real> std::string FileH5<t_real>::GetSpacegroup() const { return ""; }
 template<class t_real> std::string FileH5<t_real>::GetScanCommand() const { return m_scancommand; }
 template<class t_real> std::string FileH5<t_real>::GetTimestamp() const { return m_timestamp; }
+
+#endif
+
 
 }
 
