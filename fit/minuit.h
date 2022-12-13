@@ -124,7 +124,7 @@ public:
 	virtual t_real_min operator()(const std::vector<t_real_min>& vecParams) const override
 	{
 		t_real_min dChi2 = chi2(vecParams);
-		if(m_bDebug) tl::log_debug("Chi2 = ", dChi2);
+		if(m_bDebug) tl::log_debug("Chi2 = ", dChi2, ".");
 		return dChi2;
 	}
 
@@ -233,7 +233,7 @@ public:
 			dChi += dSingleChi;
 
 			if(m_bDebug && iNumParamSets>1)
-				tl::log_debug("Function ", iParamSet, " chi2 = ", dSingleChi);
+				tl::log_debug("Function ", iParamSet, " chi2 = ", dSingleChi, ".");
 		}
 		dChi /= t_real_min(iNumParamSets);
 		return dChi;
@@ -248,7 +248,7 @@ public:
 			dChi += dSingleChi;
 
 			if(m_bDebug && m_vecFkt.size()>1)
-				tl::log_debug("Function ", iFkt, " chi2 = ", dSingleChi);
+				tl::log_debug("Function ", iFkt, " chi2 = ", dSingleChi, ".");
 		}
 		dChi /= t_real_min(m_vecFkt.size());
 		return dChi;
@@ -259,7 +259,8 @@ public:
 	virtual t_real_min operator()(const std::vector<t_real_min>& vecParams) const override
 	{
 		t_real_min dChi2 = chi2(vecParams);
-		if(m_bDebug) tl::log_debug("Total chi2 = ", dChi2);
+		if(m_bDebug)
+			tl::log_debug("Total chi2 = ", dChi2, ".");
 		return dChi2;
 	}
 
@@ -318,7 +319,8 @@ public:
 	virtual t_real_min operator()(const std::vector<t_real_min>& vecParams) const override
 	{
 		t_real_min dChi2 = chi2(vecParams);
-		if(m_bDebug) tl::log_debug("Chi2 = ", dChi2);
+		if(m_bDebug)
+			tl::log_debug("Chi2 = ", dChi2, ".");
 		return dChi2;
 	}
 
