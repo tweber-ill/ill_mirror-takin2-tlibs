@@ -232,7 +232,7 @@ t_str get_file_nodir(const t_str& str, bool bToLower=0)
 	std::size_t iPos = str.find_last_of(get_dir_seps<t_str>());
 
 	if(iPos == t_str::npos)
-		return t_str();
+		return str;
 
 	t_str strRet = str.substr(iPos+1);
 	if(bToLower)
