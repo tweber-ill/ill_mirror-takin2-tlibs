@@ -158,7 +158,7 @@ class FilePsi : public FileInstrBase<_t_real>
 	protected:
 		std::string ReadData(std::istream& istr);
 		std::string ReadMultiData(std::istream& istr);
-		void GetInternalParams(const std::string& strAll, t_mapIParams& mapPara);
+		void GetInternalParams(const std::string& strAll, t_mapIParams& mapPara, bool fix_broken = false);
 
 	public:
 		FilePsi() = default;
@@ -172,6 +172,7 @@ class FilePsi : public FileInstrBase<_t_real>
 		const std::string& GetColName(std::size_t iCol) const { return m_vecColNames[iCol]; }
 		std::size_t GetColCount() const { return m_vecColNames.size(); }
 
+		bool HasCol(const std::string& strName) const;
 		const t_vecVals& GetCol(std::size_t iCol) const { return m_vecData[iCol]; }
 		virtual const t_vecVals& GetCol(const std::string& strName, std::size_t *pIdx=0) const override;
 		virtual t_vecVals& GetCol(const std::string& strName, std::size_t *pIdx=0) override;

@@ -448,21 +448,54 @@ std::string FilePsi<t_real>::ReadMultiData(std::istream& istr)
 
 
 template<class t_real>
-void FilePsi<t_real>::GetInternalParams(const std::string& strAll, FilePsi<t_real>::t_mapIParams& mapPara)
+void FilePsi<t_real>::GetInternalParams(const std::string& strAll,
+	FilePsi<t_real>::t_mapIParams& mapPara, bool fix_broken)
 {
 	std::vector<std::string> vecToks;
 	get_tokens<std::string, std::string>(strAll, ",\n", vecToks);
 
 	for(const std::string& strTok : vecToks)
 	{
+		if(fix_broken)
+		{
+			// ignore broken parameter strings
+			if(std::count(strTok.begin(), strTok.end(), '=') > 1)
+				continue;
+		}
+
 		std::pair<std::string, std::string> pair =
-				split_first<std::string>(strTok, "=", 1);
+			split_first<std::string>(strTok, "=", 1);
 
 		if(pair.first == "")
 			continue;
 
 		t_real dVal = str_to_var<t_real>(pair.second);
 		mapPara.insert(typename t_mapIParams::value_type(pair.first, dVal));
+	}
+
+	// sometimes the "steps" parameters are written without commas
+	if(fix_broken)
+	{
+		const std::string strRegex = R"REX(([a-zA-Z0-9]+)[ \t]*\=[ \t]*([+\-]?[0-9\.]+))REX";
+		rex::regex rx(strRegex, rex::regex::ECMAScript|rex::regex_constants::icase);
+
+		rex::smatch m;
+		std::string data = strAll;
+		while(rex::regex_search(data, m, rx))
+		{
+			if(m.size() >= 3)
+			{
+				const std::string& strkey = m[1];
+				const std::string& strval = m[2];
+				if(strkey == "")
+					continue;
+
+				t_real val = str_to_var<t_real>(strval);
+				mapPara.insert(typename t_mapIParams::value_type(strkey, val));
+			}
+
+			data = m.suffix();
+		}
 	}
 }
 
@@ -719,7 +752,8 @@ bool FilePsi<t_real>::Load(const char* pcFile)
 		}
 	}
 
-	typename t_mapParams::const_iterator iterParams = m_mapParams.find("PARAM"),
+	typename t_mapParams::const_iterator
+		iterParams = m_mapParams.find("PARAM"),
 		iterZeros = m_mapParams.find("ZEROS"),
 		iterVars = m_mapParams.find("VARIA"),
 		iterPos = m_mapParams.find("POSQE"),
@@ -729,7 +763,7 @@ bool FilePsi<t_real>::Load(const char* pcFile)
 	if(iterZeros!=m_mapParams.end()) GetInternalParams(iterZeros->second, m_mapZeros);
 	if(iterVars!=m_mapParams.end()) GetInternalParams(iterVars->second, m_mapVariables);
 	if(iterPos!=m_mapParams.end()) GetInternalParams(iterPos->second, m_mapPosHkl);
-	if(iterSteps!=m_mapParams.end()) GetInternalParams(iterSteps->second, m_mapScanSteps);
+	if(iterSteps!=m_mapParams.end()) GetInternalParams(iterSteps->second, m_mapScanSteps, true);
 
 	if(m_bAutoParsePol)
 		ParsePolData();
@@ -761,6 +795,18 @@ FilePsi<t_real>::GetCol(const std::string& strName, std::size_t *pIdx)
 
 	if(pIdx) *pIdx = m_vecColNames.size();
 	return vecNull;
+}
+
+template<class t_real>
+bool FilePsi<t_real>::HasCol(const std::string& strName) const
+{
+	for(std::size_t i=0; i<m_vecColNames.size(); ++i)
+	{
+		if(str_to_lower(m_vecColNames[i]) == str_to_lower(strName))
+			return true;
+	}
+
+	return false;
 }
 
 template<class t_real>
@@ -878,7 +924,7 @@ std::array<t_real, 4> FilePsi<t_real>::GetPosHKLE() const
 	t_real l = (iterL!=m_mapPosHkl.end() ? iterL->second : 0.);
 	t_real E = (iterE!=m_mapPosHkl.end() ? iterE->second : 0.);
 
-	return std::array<t_real,4>{{h,k,l,E}};
+	return std::array<t_real,4>{{ h, k, l, E }};
 }
 
 template<class t_real>
@@ -896,13 +942,12 @@ std::array<t_real, 4> FilePsi<t_real>::GetDeltaHKLE() const
 	typename t_mapIParams::const_iterator iterE = m_mapScanSteps.find("DEN");
 	if(iterE==m_mapScanSteps.end()) iterE = m_mapScanSteps.find("EN");
 
-
         t_real h = (iterH!=m_mapScanSteps.end() ? iterH->second : 0.);
         t_real k = (iterK!=m_mapScanSteps.end() ? iterK->second : 0.);
         t_real l = (iterL!=m_mapScanSteps.end() ? iterL->second : 0.);
         t_real E = (iterE!=m_mapScanSteps.end() ? iterE->second : 0.);
 
-        return std::array<t_real,4>{{h,k,l,E}};
+        return std::array<t_real,4>{{ h, k, l, E }};
 }
 
 template<class t_real>
@@ -943,7 +988,23 @@ std::size_t FilePsi<t_real>::GetScanCount() const
 template<class t_real>
 std::array<t_real, 5> FilePsi<t_real>::GetScanHKLKiKf(std::size_t i) const
 {
-	return FileInstrBase<t_real>::GetScanHKLKiKf("QH", "QK", "QL", "EN", i);
+	// default column names
+	const char *h = "QH";
+	const char *k = "QK";
+	const char *l = "QL";
+	const char *E = "EN";
+
+	// alternate column names
+	if(!HasCol("QH") && HasCol("H"))
+		h = "H";
+	if(!HasCol("QK") && HasCol("K"))
+		k = "K";
+	if(!HasCol("QL") && HasCol("L"))
+		l = "L";
+	if(!HasCol("EN") && HasCol("E"))
+		E = "E";
+
+	return FileInstrBase<t_real>::GetScanHKLKiKf(h, k, l, E, i);
 }
 
 template<class t_real>
@@ -1016,7 +1077,6 @@ std::vector<std::string> FilePsi<t_real>::GetScannedVars() const
 		}
 	}
 
-
 	// nothing found yet -> try scan command instead
 	if(!vecVars.size())
 	{
@@ -1052,7 +1112,7 @@ std::vector<std::string> FilePsi<t_real>::GetScannedVars() const
 				const std::string strRegex = R"REX((sc|scan)[ \t]+([a-z0-9]+)[ \t]+[0-9\.-]+[ \t]+[d|D]([a-z0-9]+).*)REX";
 				rex::regex rx(strRegex, rex::regex::ECMAScript|rex::regex_constants::icase);
 				rex::smatch m;
-				if(rex::regex_search(iter->second, m, rx) && m.size()>3)
+				if(rex::regex_search(iter->second, m, rx) && m.size() > 3)
 				{
 					const std::string& strSteps = m[3];
 					vecVars.push_back(str_to_upper(strSteps));
