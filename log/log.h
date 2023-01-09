@@ -60,11 +60,11 @@ protected:
 
 	// pair of ostream and colour flag
 	using t_pairOstr = std::pair<std::ostream*, bool>;
-	std::vector<t_pairOstr> m_vecOstrs;
+	std::vector<t_pairOstr> m_vecOstrs{};
 	using t_mapthreadOstrs = std::unordered_map<std::thread::id, std::vector<t_pairOstr>>;
-	t_mapthreadOstrs m_mapOstrsTh;
+	t_mapthreadOstrs m_mapOstrsTh{};
 
-	std::string m_strInfo;
+	std::string m_strInfo = "";
 	LogColor m_col = LogColor::NONE;
 
 	bool m_bEnabled = 1;
