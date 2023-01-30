@@ -2980,11 +2980,13 @@ bool FileH5<t_real>::Load(const char* pcFile)
 			m_scanned_vars.insert(m_scanned_vars.begin(), "EN");
 		}
 
-		// find the instrument directory
-		std::string instr_dir = "instrument";
+		// get the name of the instrument if available
+		std::string instr_dir;
+		bool instr_found = tl::get_h5_string(h5file, entry + "/instrument_name", instr_dir);
+
+		// get the first directory marked with "NXinstrument"
 		std::vector<std::string> main_entries;
 		tl::get_h5_entries(h5file, entry, main_entries);
-		bool instr_found = false;
 		for(const std::string& main_entry : main_entries)
 		{
 			std::string nx_class = tl::get_h5_attr<std::string>(h5file, entry + "/" + main_entry, "NX_class", true);
@@ -2998,7 +3000,10 @@ bool FileH5<t_real>::Load(const char* pcFile)
 		}
 
 		if(!instr_found)
+		{
+			instr_dir = "instrument";
 			tl::log_err("No instrument group found, defaulting to \"", instr_dir, "\".");
+		}
 
 		// get experiment infos
 		tl::get_h5_string(h5file, entry + "/title", m_title);

@@ -45,6 +45,9 @@ int main()
 	}
 	std::cout << std::endl;
 
+	std::cout << std::boolalpha << h5file.nameExists("entry0/data_scan/total_steps") << std::endl;
+	std::cout << std::boolalpha << h5file.nameExists("entry0/data_scan/total_steps123") << std::endl;
+
 	std::cout << std::endl;
 
 	int steps = 0;
