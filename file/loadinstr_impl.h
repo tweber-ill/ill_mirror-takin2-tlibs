@@ -2984,18 +2984,27 @@ bool FileH5<t_real>::Load(const char* pcFile)
 		std::string instr_dir;
 		bool instr_found = tl::get_h5_string(h5file, entry + "/instrument_name", instr_dir);
 
-		// get the first directory marked with "NXinstrument"
-		std::vector<std::string> main_entries;
-		tl::get_h5_entries(h5file, entry, main_entries);
-		for(const std::string& main_entry : main_entries)
+		if(instr_found)
 		{
-			std::string nx_class = tl::get_h5_attr<std::string>(h5file, entry + "/" + main_entry, "NX_class", true);
-			if(nx_class == "NXinstrument")
+			// check if the instrument group exists
+			instr_found = h5file.nameExists(entry + "/" + instr_dir);
+		}
+
+		if(!instr_found)
+		{
+			// get the first group marked with "NXinstrument"
+			std::vector<std::string> main_entries;
+			tl::get_h5_entries(h5file, entry, main_entries);
+			for(const std::string& main_entry : main_entries)
 			{
-				// found an instrument entry
-				instr_dir = main_entry;
-				instr_found = true;
-				break;
+				std::string nx_class = tl::get_h5_attr<std::string>(h5file, entry + "/" + main_entry, "NX_class", true);
+				if(nx_class == "NXinstrument")
+				{
+					// found an instrument entry
+					instr_dir = main_entry;
+					instr_found = true;
+					break;
+				}
 			}
 		}
 
