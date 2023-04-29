@@ -3248,17 +3248,13 @@ bool FileH5<t_real>::MergeWith(const FileInstrBase<t_real>* pDat)
 
 template<class t_real> std::string FileH5<t_real>::GetCountVar() const
 {
-	// look for some fixed names
-	if(std::find(m_vecCols.begin(), m_vecCols.end(), "Detector") != m_vecCols.end())
-		return "Detector";
-	if(std::find(m_vecCols.begin(), m_vecCols.end(), "SingleDetector") != m_vecCols.end())
-		return "SingleDetector";
-
 	// try to match names
 	std::string strRet;
-	if(FileInstrBase<t_real>::MatchColumn(R"REX(cnts)REX", strRet))
+	if(FileInstrBase<t_real>::MatchColumn(R"REX(Detector)REX", strRet))
 		return strRet;
-	if(FileInstrBase<t_real>::MatchColumn(R"REX(detector)REX", strRet))
+	if(FileInstrBase<t_real>::MatchColumn(R"REX(SingleDetector)REX", strRet))
+		return strRet;
+	if(FileInstrBase<t_real>::MatchColumn(R"REX(cnts)REX", strRet))
 		return strRet;
 	if(FileInstrBase<t_real>::MatchColumn(R"REX(det)REX", strRet))
 		return strRet;
