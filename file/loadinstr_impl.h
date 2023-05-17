@@ -37,6 +37,7 @@
 	#include "../file/comp.h"
 #endif
 #include "../math/math.h"
+#include "../math/stat.h"
 #include "../phys/neutrons.h"
 
 #ifdef USE_HDF5
@@ -2896,6 +2897,9 @@ template<class t_real> std::string FileRaw<t_real>::GetTimestamp() const { retur
 template<class t_real>
 bool FileH5<t_real>::Load(const char* pcFile)
 {
+	const t_real eps = 1e-6;
+	const int prec = 6;
+
 	try
 	{
 		H5::H5File h5file = H5::H5File(pcFile, H5F_ACC_RDONLY);
@@ -2958,8 +2962,23 @@ bool FileH5<t_real>::Load(const char* pcFile)
 
 		for(std::size_t idx = 0; idx<std::min(m_vecCols.size(), scanned.size()); ++idx)
 		{
+			const std::string& col_name = m_vecCols[idx];
+			const t_vecVals& col_vec = GetCol(col_name);
+
+			// add variable to parameter map
+			if(col_vec.size())
+			{
+				t_real dMean = tl::mean_value(col_vec);
+				t_real dStd = tl::std_dev(col_vec);
+
+				std::string col_val = tl::var_to_str(dMean, prec);
+				if(!tl::float_equal(dStd, t_real(0), eps))
+					col_val += " +- " + tl::var_to_str(dStd, prec);
+				m_params.insert(std::make_pair("var_" + col_name, col_val));
+			}
+
 			if(scanned[idx])
-				m_scanned_vars.push_back(m_vecCols[idx]);
+				m_scanned_vars.push_back(col_name);
 		}
 
 		// if Q, E coordinates are among the scan variables, move them to the front
@@ -3079,7 +3098,7 @@ bool FileH5<t_real>::Load(const char* pcFile)
 		m_angles[1] = tl::d2r(m_angles[1]);
 		m_angles[2] = tl::d2r(m_angles[2]);
 
-		// try to determine scanned variables from scan comamnd
+		// try to determine scanned variables from scan command
 		std::vector<std::string> scanned_vars = FilePsi<t_real>::GetScannedVarsFromCommand(m_scancommand);
 		for(auto iterScVar = scanned_vars.rbegin(); iterScVar != scanned_vars.rend(); ++iterScVar)
 		{
