@@ -330,7 +330,16 @@ void FileInstrBase<t_real>::SmoothData(const std::string& strCol,
 
 template<class t_real>
 void FileInstrBase<t_real>::ParsePolData()
-{}
+{
+	// TODO
+	/*m_vecPolStates.clear();
+
+	m_vecPolStates = parse_pol_states<t_real>(iter->second,
+		m_strPolVec1, m_strPolVec2,
+		m_strPolCur1, m_strPolCur2,
+		m_strXYZ,
+		m_strFlip1, m_strFlip2);*/
+}
 
 template<class t_real>
 void FileInstrBase<t_real>::SetPolNames(const char* pVec1, const char* pVec2,
@@ -501,36 +510,43 @@ void FilePsi<t_real>::GetInternalParams(const std::string& strAll,
 }
 
 
-template<class t_real>
-void FilePsi<t_real>::ParsePolData()
+/**
+ * check if a string describes a number
+ */
+static inline bool is_num(const std::string& str)
 {
-	m_vecPolStates.clear();
-	typename t_mapParams::const_iterator iter = m_mapParams.find("POLAN");
-	if(iter == m_mapParams.end())
-		return;
+	for(typename std::string::value_type c : str)
+	{
+		if(c!='0' && c!='1' && c!='2' && c!='3' && c!='4'
+			&& c!='5' && c!='6' && c!='7' && c!='8' && c!='9'
+			&& c!='+'&& c!='-'&& c!='.')
+			return false;
+	}
+
+	return true;
+};
+
+
+/**
+ * parse the incoming and outgoing polarisation states from a .pol script file
+ */
+template<typename t_real = double>
+static std::vector<std::array<t_real, 6>> parse_pol_states(const std::string& polScript,
+	const std::string& strPolVec1, const std::string& strPolVec2,
+	const std::string& strPolCur1, const std::string& strPolCur2,
+	const std::string& strXYZ,
+	const std::string& strFlip1, const std::string& strFlip2)
+{
+	std::vector<std::array<t_real, 6>> vecPolStates;
 
 	std::vector<std::string> vecLines;
-	tl::get_tokens<std::string, std::string>(iter->second, ",", vecLines);
+	tl::get_tokens<std::string, std::string>(polScript, ",", vecLines);
 
 	// initial and final polarisation states
 	t_real Pix = t_real(0), Piy = t_real(0), Piz = t_real(0);
 	t_real Pfx = t_real(0), Pfy = t_real(0), Pfz = t_real(0);
 	t_real Pi_sign = t_real(1);
 	t_real Pf_sign = t_real(1);
-
-
-	// check if a string describes a number
-	auto is_num = [](const std::string& str) -> bool
-	{
-		for(typename std::string::value_type c : str)
-		{
-			if(c!='0' && c!='1' && c!='2' && c!='3' && c!='4'
-				&& c!='5' && c!='6' && c!='7' && c!='8' && c!='9'
-				&& c!='+'&& c!='-'&& c!='.')
-				return false;
-		}
-		return true;
-	};
 
 	bool bIsSphericalPA = 1;
 	bool bSwitchOn = 0;
@@ -566,7 +582,7 @@ void FilePsi<t_real>::ParsePolData()
 					// --------------------------------------------------
 					// for spherical polarisation analysis
 					// --------------------------------------------------
-					if(strCurDev == m_strPolVec1)
+					if(strCurDev == strPolVec1)
 					{
 						// incoming polarisation vector changed
 						switch(iCurComp)
@@ -576,7 +592,7 @@ void FilePsi<t_real>::ParsePolData()
 							case 2: Piz = dNum; break;
 						}
 					}
-					else if(strCurDev == m_strPolVec2)
+					else if(strCurDev == strPolVec2)
 					{	// outgoing polarisation vector changed
 						switch(iCurComp)
 						{
@@ -585,7 +601,7 @@ void FilePsi<t_real>::ParsePolData()
 							case 2: Pfz = dNum; break;
 						}
 					}
-					else if(strCurDev == m_strPolCur1)
+					else if(strCurDev == strPolCur1)
 					{	// sign of polarisation vector 1 changed
 						if(iCurComp == 0)
 						{
@@ -595,7 +611,7 @@ void FilePsi<t_real>::ParsePolData()
 								Pi_sign = t_real(-1);
 						}
 					}
-					else if(strCurDev == m_strPolCur2)
+					else if(strCurDev == strPolCur2)
 					{	// sign of polarisation vector 2 changed
 						if(iCurComp == 0)
 						{
@@ -610,7 +626,7 @@ void FilePsi<t_real>::ParsePolData()
 					// --------------------------------------------------
 					// for linear polarisation analysis
 					// --------------------------------------------------
-					else if(strCurDev == m_strXYZ)
+					else if(strCurDev == strXYZ)
 					{
 						bIsSphericalPA = 0;
 
@@ -645,12 +661,12 @@ void FilePsi<t_real>::ParsePolData()
 
 			std::string strFlip = vecLine[1];
 
-			if(strFlip == m_strFlip1)
+			if(strFlip == strFlip1)
 			{
 				bIsSphericalPA = 0;
 				Pi_sign = bSwitchOn ? t_real(-1) : t_real(1);
 			}
-			else if(strFlip == m_strFlip2)
+			else if(strFlip == strFlip2)
 			{
 				bIsSphericalPA = 0;
 				Pf_sign = bSwitchOn ? t_real(-1) : t_real(1);
@@ -683,19 +699,36 @@ void FilePsi<t_real>::ParsePolData()
 			}
 
 
-			m_vecPolStates.push_back(std::array<t_real,6>({{
+			vecPolStates.push_back(std::array<t_real,6>({{
 				Pi_sign*Pix, Pi_sign*Piy, Pi_sign*Piz,
 				Pf_sign*Pfx, Pf_sign*Pfy, Pf_sign*Pfz }}));
 		}
 	}
 
-
 	// cleanup
-	for(std::size_t iPol=0; iPol<m_vecPolStates.size(); ++iPol)
+	for(std::size_t iPol=0; iPol<vecPolStates.size(); ++iPol)
 	{
 		for(unsigned iComp=0; iComp<6; ++iComp)
-			set_eps_0(m_vecPolStates[iPol][iComp]);
+			set_eps_0(vecPolStates[iPol][iComp]);
 	}
+
+	return vecPolStates;
+}
+
+
+template<class t_real>
+void FilePsi<t_real>::ParsePolData()
+{
+	m_vecPolStates.clear();
+	typename t_mapParams::const_iterator iter = m_mapParams.find("POLAN");
+	if(iter == m_mapParams.end())
+		return;
+
+	m_vecPolStates = parse_pol_states<t_real>(iter->second,
+		m_strPolVec1, m_strPolVec2,
+		m_strPolCur1, m_strPolCur2,
+		m_strXYZ,
+		m_strFlip1, m_strFlip2);
 }
 
 
