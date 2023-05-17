@@ -330,16 +330,7 @@ void FileInstrBase<t_real>::SmoothData(const std::string& strCol,
 
 template<class t_real>
 void FileInstrBase<t_real>::ParsePolData()
-{
-	// TODO
-	/*m_vecPolStates.clear();
-
-	m_vecPolStates = parse_pol_states<t_real>(iter->second,
-		m_strPolVec1, m_strPolVec2,
-		m_strPolCur1, m_strPolCur2,
-		m_strXYZ,
-		m_strFlip1, m_strFlip2);*/
-}
+{}
 
 template<class t_real>
 void FileInstrBase<t_real>::SetPolNames(const char* pVec1, const char* pVec2,
@@ -353,7 +344,9 @@ void FileInstrBase<t_real>::SetLinPolNames(const char* pFlip1, const char* pFlip
 
 template<class t_real>
 std::size_t FileInstrBase<t_real>::NumPolChannels() const
-{ return 0; }
+{
+	return 0;
+}
 
 template<class t_real>
 const std::vector<std::array<t_real, 6>>& FileInstrBase<t_real>::GetPolStates() const
@@ -528,7 +521,7 @@ static inline bool is_num(const std::string& str)
 
 
 /**
- * parse the incoming and outgoing polarisation states from a .pol script file
+ * parse the incoming and outgoing polarisation states from a .pal script file
  */
 template<typename t_real = double>
 static std::vector<std::array<t_real, 6>> parse_pol_states(const std::string& polScript,
@@ -729,6 +722,38 @@ void FilePsi<t_real>::ParsePolData()
 		m_strPolCur1, m_strPolCur2,
 		m_strXYZ,
 		m_strFlip1, m_strFlip2);
+}
+
+
+template<class t_real>
+void FilePsi<t_real>::SetAutoParsePolData(bool b)
+{
+	m_bAutoParsePol = b;
+}
+
+
+template<class t_real>
+const std::vector<std::array<t_real, 6>>& FilePsi<t_real>::GetPolStates() const
+{
+	return m_vecPolStates;
+}
+
+
+template<class t_real>
+void FilePsi<t_real>::SetPolNames(const char* pVec1, const char* pVec2,
+	const char* pCur1, const char* pCur2)
+{
+	m_strPolVec1 = pVec1; m_strPolVec2 = pVec2;
+	m_strPolCur1 = pCur1; m_strPolCur2 = pCur2;
+}
+
+
+template<class t_real>
+void FilePsi<t_real>::SetLinPolNames(const char* pFlip1, const char* pFlip2,
+	const char* pXYZ)
+{
+	m_strFlip1 = pFlip1; m_strFlip2 = pFlip2;
+	m_strXYZ = pXYZ;
 }
 
 
@@ -3080,6 +3105,10 @@ bool FileH5<t_real>::Load(const char* pcFile)
 		tl::get_h5_scalar(h5file, entry + "/run_number", m_scannumber);
 		tl::get_h5_string(h5file, entry + "/" + instr_dir + "/command_line/actual_command", m_scancommand);
 
+		// get polarisation infos
+		tl::get_h5_string(h5file, entry + "/" + instr_dir + "/pal/pal_contents", m_palcommand);
+		tl::find_all_and_replace<std::string>(m_palcommand, "|", ",");
+
 		// get user infos
 		tl::get_h5_string(h5file, entry + "/user/name", m_username);
 		tl::get_h5_string(h5file, entry + "/user/namelocalcontact", m_localname);
@@ -3147,6 +3176,9 @@ bool FileH5<t_real>::Load(const char* pcFile)
 		}
 
 		h5file.close();
+
+		if(m_bAutoParsePol)
+			ParsePolData();
 	}
 	catch(const H5::Exception& ex)
 	{
@@ -3162,12 +3194,14 @@ bool FileH5<t_real>::Load(const char* pcFile)
 	return true;
 }
 
+
 template<class t_real>
 const typename FileInstrBase<t_real>::t_vecVals&
 FileH5<t_real>::GetCol(const std::string& strName, std::size_t *pIdx) const
 {
 	return const_cast<FileH5*>(this)->GetCol(strName, pIdx);
 }
+
 
 template<class t_real>
 typename FileInstrBase<t_real>::t_vecVals&
@@ -3188,12 +3222,14 @@ FileH5<t_real>::GetCol(const std::string& strName, std::size_t *pIdx)
 	return vecNull;
 }
 
+
 template<class t_real>
 const typename FileInstrBase<t_real>::t_vecDat&
 FileH5<t_real>::GetData() const
 {
 	return m_data;
 }
+
 
 template<class t_real>
 typename FileInstrBase<t_real>::t_vecDat&
@@ -3202,12 +3238,14 @@ FileH5<t_real>::GetData()
 	return m_data;
 }
 
+
 template<class t_real>
 const typename FileInstrBase<t_real>::t_vecColNames&
 FileH5<t_real>::GetColNames() const
 {
 	return m_vecCols;
 }
+
 
 template<class t_real>
 const typename FileInstrBase<t_real>::t_mapParams&
@@ -3216,11 +3254,13 @@ FileH5<t_real>::GetAllParams() const
 	return m_params;
 }
 
+
 template<class t_real>
 std::array<t_real,3> FileH5<t_real>::GetSampleLattice() const
 {
 	return m_lattice;
 }
+
 
 template<class t_real>
 std::array<t_real,3> FileH5<t_real>::GetSampleAngles() const
@@ -3228,11 +3268,13 @@ std::array<t_real,3> FileH5<t_real>::GetSampleAngles() const
 	return m_angles;
 }
 
+
 template<class t_real>
 std::array<t_real,2> FileH5<t_real>::GetMonoAnaD() const
 {
 	return m_dspacings;
 }
+
 
 template<class t_real>
 std::array<bool, 3> FileH5<t_real>::GetScatterSenses() const
@@ -3240,11 +3282,13 @@ std::array<bool, 3> FileH5<t_real>::GetScatterSenses() const
 	return m_senses;
 }
 
+
 template<class t_real>
 std::array<t_real, 3> FileH5<t_real>::GetScatterPlane0() const
 {
 	return m_plane[0];
 }
+
 
 template<class t_real>
 std::array<t_real, 3> FileH5<t_real>::GetScatterPlane1() const
@@ -3252,11 +3296,13 @@ std::array<t_real, 3> FileH5<t_real>::GetScatterPlane1() const
 	return m_plane[1];
 }
 
+
 template<class t_real>
 std::array<t_real, 4> FileH5<t_real>::GetPosHKLE() const
 {
 	return m_initialpos;
 }
+
 
 template<class t_real>
 t_real FileH5<t_real>::GetKFix() const
@@ -3264,11 +3310,13 @@ t_real FileH5<t_real>::GetKFix() const
 	return m_kfix;
 }
 
+
 template<class t_real>
 bool FileH5<t_real>::IsKiFixed() const
 {
 	return m_iskifixed;
 }
+
 
 template<class t_real>
 std::size_t FileH5<t_real>::GetScanCount() const
@@ -3277,6 +3325,7 @@ std::size_t FileH5<t_real>::GetScanCount() const
 		return m_data[0].size();
 	return 0;
 }
+
 
 template<class t_real>
 std::array<t_real, 5> FileH5<t_real>::GetScanHKLKiKf(std::size_t i) const
@@ -3287,16 +3336,19 @@ std::array<t_real, 5> FileH5<t_real>::GetScanHKLKiKf(std::size_t i) const
 	return FileInstrBase<t_real>::GetScanHKLKiKf("QH", "QK", "QL", "EN", i);
 }
 
+
 template<class t_real> std::vector<std::string> FileH5<t_real>::GetScannedVars() const
 {
 	return m_scanned_vars;
 }
+
 
 template<class t_real>
 bool FileH5<t_real>::MergeWith(const FileInstrBase<t_real>* pDat)
 {
 	return FileInstrBase<t_real>::MergeWith(pDat);
 }
+
 
 template<class t_real> std::string FileH5<t_real>::GetCountVar() const
 {
@@ -3314,15 +3366,101 @@ template<class t_real> std::string FileH5<t_real>::GetCountVar() const
 	return "";
 }
 
-template<class t_real> std::string FileH5<t_real>::GetMonVar() const { return "Monitor1"; }
-template<class t_real> std::string FileH5<t_real>::GetTitle() const { return m_title; }
-template<class t_real> std::string FileH5<t_real>::GetUser() const { return m_username; }
-template<class t_real> std::string FileH5<t_real>::GetLocalContact() const { return m_localname; }
-template<class t_real> std::string FileH5<t_real>::GetScanNumber() const { return tl::var_to_str(m_scannumber); }
+
+template<class t_real>
+void FileH5<t_real>::ParsePolData()
+{
+	m_vecPolStates = parse_pol_states<t_real>(m_palcommand,
+		m_strPolVec1, m_strPolVec2,
+		m_strPolCur1, m_strPolCur2,
+		m_strXYZ,
+		m_strFlip1, m_strFlip2);
+}
+
+
+template<class t_real>
+std::size_t FileH5<t_real>::NumPolChannels() const
+{
+	return m_vecPolStates.size();
+}
+
+
+template<class t_real>
+const std::vector<std::array<t_real, 6>>& FileH5<t_real>::GetPolStates() const
+{
+	return m_vecPolStates;
+}
+
+
+template<class t_real>
+void FileH5<t_real>::SetPolNames(const char* pVec1, const char* pVec2,
+	const char* pCur1, const char* pCur2)
+{
+	m_strPolVec1 = pVec1; m_strPolVec2 = pVec2;
+	m_strPolCur1 = pCur1; m_strPolCur2 = pCur2;
+}
+
+
+template<class t_real>
+void FileH5<t_real>::SetLinPolNames(const char* pFlip1, const char* pFlip2,
+	const char* pXYZ)
+{
+	m_strFlip1 = pFlip1; m_strFlip2 = pFlip2;
+	m_strXYZ = pXYZ;
+}
+
+
+template<class t_real> void FileH5<t_real>::SetAutoParsePolData(bool b)
+{
+	m_bAutoParsePol = b;
+}
+
+
+template<class t_real> std::string FileH5<t_real>::GetMonVar() const
+{
+	return "Monitor1";
+}
+
+
+template<class t_real> std::string FileH5<t_real>::GetTitle() const
+{
+	return m_title;
+}
+
+
+template<class t_real> std::string FileH5<t_real>::GetUser() const
+{
+	return m_username;
+}
+
+
+template<class t_real> std::string FileH5<t_real>::GetLocalContact() const
+{
+	return m_localname;
+}
+
+
+template<class t_real> std::string FileH5<t_real>::GetScanNumber() const
+{
+	return tl::var_to_str(m_scannumber);
+}
+
+
+template<class t_real> std::string FileH5<t_real>::GetScanCommand() const
+{
+	return m_scancommand;
+}
+
+
+template<class t_real> std::string FileH5<t_real>::GetTimestamp() const
+{
+	return m_timestamp;
+}
+
+
 template<class t_real> std::string FileH5<t_real>::GetSampleName() const { return ""; }
 template<class t_real> std::string FileH5<t_real>::GetSpacegroup() const { return ""; }
-template<class t_real> std::string FileH5<t_real>::GetScanCommand() const { return m_scancommand; }
-template<class t_real> std::string FileH5<t_real>::GetTimestamp() const { return m_timestamp; }
+
 
 #endif
 
