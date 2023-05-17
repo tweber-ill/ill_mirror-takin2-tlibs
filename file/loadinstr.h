@@ -541,6 +541,8 @@ class FileH5 : public FileInstrBase<_t_real>
 		std::string m_strXYZ {"hx"};
 		std::string m_strFlip1 {"f1"}, m_strFlip2 {"f2"};
 
+		std::size_t m_numPolChannels = 0;
+
 	public:
 		FileH5() = default;
 		virtual ~FileH5() = default;

@@ -70,7 +70,7 @@ void FileInstrBase<t_real>::RenameDuplicateCols()
 		t_mapCols::iterator iter = mapCols.find(strCol);
 		if(iter == mapCols.end())
 		{
-			mapCols.insert(std::make_pair(strCol, 0));
+			mapCols.emplace(std::make_pair(strCol, 0));
 		}
 		else
 		{
@@ -473,7 +473,7 @@ void FilePsi<t_real>::GetInternalParams(const std::string& strAll,
 			continue;
 
 		t_real dVal = str_to_var<t_real>(pair.second);
-		mapPara.insert(typename t_mapIParams::value_type(pair.first, dVal));
+		mapPara.emplace(typename t_mapIParams::value_type(pair.first, dVal));
 	}
 
 	// sometimes the "steps" parameters are written without commas
@@ -494,7 +494,7 @@ void FilePsi<t_real>::GetInternalParams(const std::string& strAll,
 					continue;
 
 				t_real val = str_to_var<t_real>(strval);
-				mapPara.insert(typename t_mapIParams::value_type(strkey, val));
+				mapPara.emplace(typename t_mapIParams::value_type(strkey, val));
 			}
 
 			data = m.suffix();
@@ -3032,7 +3032,7 @@ bool FileH5<t_real>::Load(const char* pcFile)
 				std::string col_val = tl::var_to_str(dMean, prec);
 				if(!tl::float_equal(dStd, t_real(0), eps))
 					col_val += " +- " + tl::var_to_str(dStd, prec);
-				m_params.insert(std::make_pair("var_" + col_name, col_val));
+				m_params.emplace(std::make_pair("var_" + col_name, col_val));
 			}
 
 			if(scanned[idx])
@@ -3100,14 +3100,17 @@ bool FileH5<t_real>::Load(const char* pcFile)
 		}
 
 		// get experiment infos
+		std::string timestamp_end;
 		tl::get_h5_string(h5file, entry + "/title", m_title);
 		tl::get_h5_string(h5file, entry + "/start_time", m_timestamp);
+		tl::get_h5_string(h5file, entry + "/end_time", timestamp_end);
 		tl::get_h5_scalar(h5file, entry + "/run_number", m_scannumber);
 		tl::get_h5_string(h5file, entry + "/" + instr_dir + "/command_line/actual_command", m_scancommand);
 
 		// get polarisation infos
 		tl::get_h5_string(h5file, entry + "/" + instr_dir + "/pal/pal_contents", m_palcommand);
-		tl::find_all_and_replace<std::string>(m_palcommand, "|", ",");
+		if(!tl::get_h5_scalar(h5file, entry + "/data_scan/pal_steps", m_numPolChannels))
+			m_numPolChannels = 0;
 
 		// get user infos
 		tl::get_h5_string(h5file, entry + "/user/name", m_username);
@@ -3175,7 +3178,27 @@ bool FileH5<t_real>::Load(const char* pcFile)
 			}
 		}
 
+		// check consistency with respect to the number of scan steps
+		std::size_t scan_steps = 0;
+		std::size_t pal_steps = m_numPolChannels ? m_numPolChannels : 1;
+		if(tl::get_h5_scalar(h5file, entry + "/data_scan/actual_step", scan_steps)
+			&& GetScanCount() != scan_steps*pal_steps)
+		{
+			tl::log_warn("Determined ", GetScanCount(),
+				" scan steps, but file reports ", scan_steps*pal_steps, ".");
+		}
+
 		h5file.close();
+
+		// add parameters to map
+		m_params.emplace(std::make_pair("exp_title", m_title));
+		m_params.emplace(std::make_pair("exp_user", m_username));
+		m_params.emplace(std::make_pair("exp_localcontact", m_localname));
+		m_params.emplace(std::make_pair("scan_starttime", m_timestamp));
+		m_params.emplace(std::make_pair("scan_endtime", timestamp_end));
+		m_params.emplace(std::make_pair("scan_number", tl::var_to_str(m_scannumber)));
+		m_params.emplace(std::make_pair("scan_command", m_scancommand));
+		m_params.emplace(std::make_pair("scan_polarisation_command", m_palcommand));
 
 		if(m_bAutoParsePol)
 			ParsePolData();
@@ -3370,18 +3393,29 @@ template<class t_real> std::string FileH5<t_real>::GetCountVar() const
 template<class t_real>
 void FileH5<t_real>::ParsePolData()
 {
-	m_vecPolStates = parse_pol_states<t_real>(m_palcommand,
+	std::string palcommand = m_palcommand;
+	tl::find_all_and_replace<std::string>(palcommand, "|", ",");
+
+	m_vecPolStates = parse_pol_states<t_real>(palcommand,
 		m_strPolVec1, m_strPolVec2,
 		m_strPolCur1, m_strPolCur2,
 		m_strXYZ,
 		m_strFlip1, m_strFlip2);
+
+	if(m_vecPolStates.size() && m_numPolChannels != m_vecPolStates.size())
+	{
+		tl::log_warn("Determined ", m_vecPolStates.size(),
+			" polarisation channels, but file reports ", m_numPolChannels, ".");
+		m_numPolChannels = m_vecPolStates.size();
+	}
 }
 
 
 template<class t_real>
 std::size_t FileH5<t_real>::NumPolChannels() const
 {
-	return m_vecPolStates.size();
+	return m_numPolChannels;
+	//return m_vecPolStates.size();
 }
 
 
