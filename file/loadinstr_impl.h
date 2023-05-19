@@ -3122,12 +3122,27 @@ bool FileH5<t_real>::Load(const char* pcFile)
 		int fx = 2;
 
 		tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Monochromator/d_spacing", m_dspacings[0]);
-		tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Monochromator/sens", mono_sense);
-		tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Monochromator/ki", ki);
+		if(!tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Monochromator/sense", mono_sense))
+			tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Monochromator/sens", mono_sense);
+		if(!tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Monochromator/ki", ki))
+		{
+			// if ki does not exist, try to convert from Ei
+			t_real Ei = 0.;
+			if(tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Monochromator/ei", Ei))
+				ki = std::sqrt(get_E2KSQ<t_real>() * Ei);
+		}
 		tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Analyser/d_spacing", m_dspacings[1]);
-		tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Analyser/sens", ana_sense);
-		tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Analyser/kf", kf);
-		tl::get_h5_scalar(h5file, entry + "/sample/sens", sample_sense);
+		if(!tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Analyser/sense", ana_sense))
+			tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Analyser/sens", ana_sense);
+		if(!tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Analyser/kf", kf))
+		{
+			// if kf does not exist, try to convert from Ef
+			t_real Ef = 0.;
+			if(tl::get_h5_scalar(h5file, entry + "/" + instr_dir + "/Analyser/ef", Ef))
+				kf = std::sqrt(get_E2KSQ<t_real>() * Ef);
+		}
+		if(!tl::get_h5_scalar(h5file, entry + "/sample/sense", sample_sense))
+			tl::get_h5_scalar(h5file, entry + "/sample/sens", sample_sense);
 		tl::get_h5_scalar(h5file, entry + "/sample/fx", fx);
 
 		m_senses[0] = mono_sense > 0.;
