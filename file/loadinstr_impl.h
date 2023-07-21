@@ -2841,9 +2841,14 @@ std::array<t_real, 4> FileTax<t_real>::GetPosHKLE() const
 template<class t_real>
 t_real FileTax<t_real>::GetKFix() const
 {
-	t_real k{0};
+	bool ki_fixed = IsKiFixed();
+	const t_vecVals& colEfix = GetCol(ki_fixed ? "ei" : "ef");
 
-	// TODO
+	t_real E = mean_value(colEfix);
+	bool imag;
+	t_real k = E2k<units::si::system, t_real>(
+		E * get_one_meV<t_real>(), imag)
+			* get_one_angstrom<t_real>();
 
 	return k;
 }
@@ -2985,7 +2990,7 @@ template<class t_real> std::string FileTax<t_real>::GetScanCommand() const
 	using t_map = typename FileInstrBase<t_real>::t_mapParams;
 	const t_map& params = GetAllParams();
 
-	typename t_map::const_iterator iter = params.find("samplename");
+	typename t_map::const_iterator iter = params.find("command");
 	if(iter != params.end())
 		return iter->second;
 	return "";
