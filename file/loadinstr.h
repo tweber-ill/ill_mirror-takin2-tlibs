@@ -464,6 +464,9 @@ class FileTax : public FileInstrBase<_t_real>
 		FileTax() = default;
 		virtual ~FileTax() = default;
 
+	protected:
+		std::array<t_real, 3> GetScatterPlaneVector(int i) const;
+
 	public:
 		virtual bool Load(const char* pcFile) override;
 

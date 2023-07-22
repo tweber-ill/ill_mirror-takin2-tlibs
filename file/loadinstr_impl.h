@@ -39,6 +39,7 @@
 #include "../math/math.h"
 #include "../math/stat.h"
 #include "../phys/neutrons.h"
+#include "../phys/lattice.h"
 
 #ifdef USE_HDF5
 	#include "../file/h5.h"
@@ -2406,7 +2407,7 @@ FileTrisp<t_real>::GetCol(const std::string& strName, std::size_t *pIdx)
 }
 
 template<class t_real>
-std::array<t_real,3> FileTrisp<t_real>::GetSampleLattice() const
+std::array<t_real, 3> FileTrisp<t_real>::GetSampleLattice() const
 {
 	typename t_mapParams::const_iterator iterA = m_mapParams.find("AS");
 	typename t_mapParams::const_iterator iterB = m_mapParams.find("BS");
@@ -2420,7 +2421,7 @@ std::array<t_real,3> FileTrisp<t_real>::GetSampleLattice() const
 }
 
 template<class t_real>
-std::array<t_real,3> FileTrisp<t_real>::GetSampleAngles() const
+std::array<t_real, 3> FileTrisp<t_real>::GetSampleAngles() const
 {
 	typename t_mapParams::const_iterator iterA = m_mapParams.find("AA");
 	typename t_mapParams::const_iterator iterB = m_mapParams.find("BB");
@@ -2434,7 +2435,7 @@ std::array<t_real,3> FileTrisp<t_real>::GetSampleAngles() const
 }
 
 template<class t_real>
-std::array<t_real,2> FileTrisp<t_real>::GetMonoAnaD() const
+std::array<t_real, 2> FileTrisp<t_real>::GetMonoAnaD() const
 {
 	typename t_mapParams::const_iterator iterM = m_mapParams.find("DM");
 	typename t_mapParams::const_iterator iterA = m_mapParams.find("DA");
@@ -2731,7 +2732,7 @@ FileTax<t_real>::GetAllParams() const
 }
 
 template<class t_real>
-std::array<t_real,3> FileTax<t_real>::GetSampleLattice() const
+std::array<t_real, 3> FileTax<t_real>::GetSampleLattice() const
 {
 	using t_map = typename FileInstrBase<t_real>::t_mapParams;
 	const t_map& params = GetAllParams();
@@ -2751,11 +2752,11 @@ std::array<t_real,3> FileTax<t_real>::GetSampleLattice() const
 			c = vecToks[2];
 	}
 
-	return std::array<t_real,3>{{a, b, c}};
+	return std::array<t_real, 3>{{a, b, c}};
 }
 
 template<class t_real>
-std::array<t_real,3> FileTax<t_real>::GetSampleAngles() const
+std::array<t_real, 3> FileTax<t_real>::GetSampleAngles() const
 {
 	using t_map = typename FileInstrBase<t_real>::t_mapParams;
 	const t_map& params = GetAllParams();
@@ -2775,17 +2776,17 @@ std::array<t_real,3> FileTax<t_real>::GetSampleAngles() const
 			c = d2r(vecToks[5]);
 	}
 
-	return std::array<t_real,3>{{a, b, c}};
+	return std::array<t_real, 3>{{a, b, c}};
 }
 
 template<class t_real>
-std::array<t_real,2> FileTax<t_real>::GetMonoAnaD() const
+std::array<t_real, 2> FileTax<t_real>::GetMonoAnaD() const
 {
 	t_real m{0}, a{0};
 
 	// TODO
 
-	return std::array<t_real,2>{{m, a}};
+	return std::array<t_real, 2>{{m, a}};
 }
 
 template<class t_real>
@@ -2806,35 +2807,74 @@ std::array<bool, 3> FileTax<t_real>::GetScatterSenses() const
 			a = (iter->second[2] == '+');
 	}
 
-	return std::array<bool,3>{{m, s, a}};
+	return std::array<bool, 3>{{m, s, a}};
+}
+
+template<class t_real>
+std::array<t_real, 3> FileTax<t_real>::GetScatterPlaneVector(int i) const
+{
+	using t_mat = tl::ublas::matrix<t_real>;
+	using t_vec = tl::ublas::vector<t_real>;
+
+	using t_map = typename FileInstrBase<t_real>::t_mapParams;
+	const t_map& params = GetAllParams();
+
+	const t_vecVals& colGl = GetCol("sgl");
+	const t_vecVals& colGu = GetCol("sgu");
+	t_real gl = d2r(mean_value(colGl));
+	t_real gu = d2r(mean_value(colGu));
+
+	t_real x{0}, y{0}, z{0};
+	typename t_map::const_iterator iter = params.find("ubmatrix");
+	if(iter != params.end())
+	{
+		std::vector<t_real> vecToks;
+		get_tokens<t_real, std::string>(iter->second, ",", vecToks);
+		t_mat UB = tl::make_mat<t_mat>({
+			{ vecToks[0], vecToks[3], vecToks[6] },
+			{ vecToks[1], vecToks[4], vecToks[7] },
+			{ vecToks[2], vecToks[5], vecToks[8] } });
+
+		std::array<t_real, 3> lattice = GetSampleLattice();
+		std::array<t_real, 3> angles = GetSampleAngles();
+
+		tl::Lattice<t_real> latt(
+			lattice[0], lattice[1], lattice[2],
+			angles[0], angles[1], angles[2]);
+		latt.RotateEuler(-gl, -gu, 0.);
+
+		t_mat B = tl::get_B(latt, true);
+		t_mat B_inv;
+		tl::inverse(B, B_inv);
+
+		t_mat U = prod_mm(UB, B_inv);
+		t_vec vec = tl::make_vec<t_vec>({ U(0, i), U(1, i), U(2, i) });
+		vec = prod_mv(B_inv, vec);
+		vec /= tl::veclen(vec);
+
+		x = vec[0]; y = vec[1]; z = vec[2];
+	}
+
+	return std::array<t_real, 3>{{x, y, z}};
 }
 
 template<class t_real>
 std::array<t_real, 3> FileTax<t_real>::GetScatterPlane0() const
 {
-	t_real x{0}, y{0}, z{0};
-
-	// TODO
-
-	return std::array<t_real,3>{{x, y, z}};
+	return GetScatterPlaneVector(0);
 }
 
 template<class t_real>
 std::array<t_real, 3> FileTax<t_real>::GetScatterPlane1() const
 {
-	t_real x{0}, y{0}, z{0};
-
-	// TODO
-
-	return std::array<t_real,3>{{x, y, z}};
+	return GetScatterPlaneVector(1);
 }
-
 
 template<class t_real>
 std::array<t_real, 4> FileTax<t_real>::GetPosHKLE() const
 {
 	// TODO: implement
-	return std::array<t_real,4>{{0,0,0,0}};
+	return std::array<t_real, 4>{{0,0,0,0}};
 }
 
 
@@ -2849,7 +2889,6 @@ t_real FileTax<t_real>::GetKFix() const
 	t_real k = E2k<units::si::system, t_real>(
 		E * get_one_meV<t_real>(), imag)
 			* get_one_angstrom<t_real>();
-
 	return k;
 }
 
@@ -3088,7 +3127,7 @@ FileRaw<t_real>::GetAllParams() const
 }
 
 template<class t_real>
-std::array<t_real,3> FileRaw<t_real>::GetSampleLattice() const
+std::array<t_real, 3> FileRaw<t_real>::GetSampleLattice() const
 {
 	using t_map = typename FileInstrBase<t_real>::t_mapParams;
 	const t_map& params = GetAllParams();
@@ -3114,7 +3153,7 @@ std::array<t_real,3> FileRaw<t_real>::GetSampleLattice() const
 }
 
 template<class t_real>
-std::array<t_real,3> FileRaw<t_real>::GetSampleAngles() const
+std::array<t_real, 3> FileRaw<t_real>::GetSampleAngles() const
 {
 	using t_map = typename FileInstrBase<t_real>::t_mapParams;
 	const t_map& params = GetAllParams();
@@ -3140,7 +3179,7 @@ std::array<t_real,3> FileRaw<t_real>::GetSampleAngles() const
 }
 
 template<class t_real>
-std::array<t_real,2> FileRaw<t_real>::GetMonoAnaD() const
+std::array<t_real, 2> FileRaw<t_real>::GetMonoAnaD() const
 {
 	using t_map = typename FileInstrBase<t_real>::t_mapParams;
 	const t_map& params = GetAllParams();
