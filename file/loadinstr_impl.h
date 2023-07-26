@@ -987,10 +987,10 @@ t_real FilePsi<t_real>::GetKFix() const
 template<class t_real>
 std::array<t_real, 4> FilePsi<t_real>::GetPosHKLE() const
 {
-	typename t_mapIParams::const_iterator iterH = m_mapPosHkl.find("DQH");
-	typename t_mapIParams::const_iterator iterK = m_mapPosHkl.find("DQK");
-	typename t_mapIParams::const_iterator iterL = m_mapPosHkl.find("DQL");
-	typename t_mapIParams::const_iterator iterE = m_mapPosHkl.find("DEN");
+	typename t_mapIParams::const_iterator iterH = m_mapPosHkl.find("QH");
+	typename t_mapIParams::const_iterator iterK = m_mapPosHkl.find("QK");
+	typename t_mapIParams::const_iterator iterL = m_mapPosHkl.find("QL");
+	typename t_mapIParams::const_iterator iterE = m_mapPosHkl.find("EN");
 
 	t_real h = (iterH!=m_mapPosHkl.end() ? iterH->second : 0.);
 	t_real k = (iterK!=m_mapPosHkl.end() ? iterK->second : 0.);
